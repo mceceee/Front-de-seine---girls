@@ -28,7 +28,9 @@ const PRESET={B:'000100221',T:'110200221',L:'112111111',X:'000000000'};
 const DEFAULT_MODES='BBBBBLL';
 const DEFAULT_AVAIL=DEFAULT_MODES.split('').map(m=>PRESET[m]).join('');
 const PEOPLE=['p1','p2','p3'];
-const CLUBS={auteuil:'Auteuil',beaugrenelle:'Beaugrenelle'};
+const CLUBS={auteuil:'Auteuil',beaugrenelle:'Beaugrenelle',inconnu:'Club à voir sur l’appli FDS'};
+/* Mention du lieu quand ce n'est pas Auteuil. */
+const clubNote=s=>s.club==='beaugrenelle'?'Beaugrenelle':s.club==='inconnu'?'Club à voir sur l’appli FDS':'';
 
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const isObj=v=>v&&typeof v==='object'&&!Array.isArray(v);
@@ -135,8 +137,8 @@ const prefOf=(p,course)=>{const v=(profile(p).prefs||{})[course];return v===0||v
 
 /* ---------- Créneaux ---------- */
 const slotCache={};
-function clubSlots(c){const wd=WEEKDATA[ui.week],ck=c+'|'+(wd?ui.week:'');if(slotCache[ck])return slotCache[ck];const seen={},pre=c==='auteuil'?'':'bg_';
-  const out=((wd&&wd[c])||DATA[c]||[]).map(r=>{const [studio,day,time,course,coach]=r;const [h,m]=time.split(':').map(Number);
+function clubSlots(c){const wd=WEEKDATA[ui.week],ck=c+'|'+(wd?ui.week:'');if(slotCache[ck])return slotCache[ck];const seen={},pre=c==='auteuil'?'':c==='inconnu'?'x_':'bg_';
+  const out=((wd?wd[c]:DATA[c])||[]).map(r=>{const [studio,day,time,course,coach]=r;const [h,m]=time.split(':').map(Number);
     let id=pre+day+'-'+time.replace(':','')+'-'+course.toLowerCase().normalize('NFD').replace(/[^a-z]/g,'');
     if(seen[id])id+='-'+(++seen[id]);else seen[id]=1;
     const meta=CATALOG[course]||{};
@@ -147,7 +149,7 @@ function slots(){return clubSlots('auteuil')}
 /* Par défaut on propose les deux clubs, Auteuil de préférence. Une case peut être limitée à un seul lieu. */
 const lieuAt=(d,b)=>{const v=(week().lieu||{})[d+'-'+b];return v==='auteuil'||v==='beaugrenelle'?v:null};
 const candCacheW={};
-function candidates(){const ck=WEEKDATA[ui.week]?ui.week:'';if(!candCacheW[ck])candCacheW[ck]=clubSlots('auteuil').concat(clubSlots('beaugrenelle')).sort((a,b)=>a.day-b.day||a.min-b.min||a.course.localeCompare(b.course)||(a.club<b.club?-1:1));
+function candidates(){const ck=WEEKDATA[ui.week]?ui.week:'';if(!candCacheW[ck])candCacheW[ck]=clubSlots('auteuil').concat(clubSlots('beaugrenelle'),ck?clubSlots('inconnu'):[]).sort((a,b)=>a.day-b.day||a.min-b.min||a.course.localeCompare(b.course)||(a.club<b.club?-1:1));
   const candCache=candCacheW[ck],l=week().lieu||{};if(!Object.keys(l).length)return candCache;
   return candCache.filter(s=>{const v=lieuAt(s.day,s.band);return !v||v===s.club})}
 const GYM_TIMES=['07:00','08:15','09:30','10:45','12:00','12:30','13:15','14:45','16:00','17:15','18:30','19:45','21:00'];
@@ -158,7 +160,7 @@ function gymPart(key){const v=(week().gym||{})[key];if(v===true){const o={};PEOP
   if(isObj(v)&&PEOPLE.some(p=>v[p])){const o={};PEOPLE.forEach(p=>o[p]=!!v[p]);return o}return null}
 function gymWho(g){const part=gymPart(g.id.slice(4))||{};return PEOPLE.map(p=>({p,a:1,pr:1,ok:!!part[p]}))}
 const gymList=()=>Object.keys(week().gym||{}).filter(k=>gymPart(k)).map(k=>gymSlot('gym_'+k)).filter(Boolean);
-const slotById=id=>String(id).startsWith('gym_')?gymSlot(id):clubSlots(String(id).startsWith('bg_')?'beaugrenelle':'auteuil').find(s=>s.id===id);
+const slotById=id=>String(id).startsWith('gym_')?gymSlot(id):clubSlots(String(id).startsWith('bg_')?'beaugrenelle':String(id).startsWith('x_')?'inconnu':'auteuil').find(s=>s.id===id);
 
 const hhmm=t=>t.replace(':','h').replace(/^0/,'');
 const DSHORT=['lun.','mar.','mer.','jeu.','ven.','sam.','dim.'];
@@ -319,18 +321,18 @@ function soloHints(c,r,pick,me){if(!pick||!CATLBL[c]||r.label)return '';const so
     return a?`<span class="ss solo">${esc(pname(x.p))} : ${DAYS[a.day].slice(0,3).toLowerCase()}. ${hhmm(a.time)} ${esc(a.course)}</span>`:''}).join('')}
 /* week.invites[créneau] = {from:'p1', to:{p2:'ask'|'yes'|'no'}} */
 function invitesFor(p){const iv=week().invites||{};return Object.keys(iv).filter(id=>iv[id]&&iv[id].to&&iv[id].to[p]==='ask'&&slotById(id)&&!isDone(ui.week,slotById(id))).map(id=>({s:slotById(id),from:iv[id].from}))}
-function inviteRows(p){return invitesFor(p).map(o=>`<div class="rb"><span class="aw"><span class="lbl">${esc(pname(o.from))} t’invite</span><b>${DAYS[o.s.day].slice(0,3)}. ${hhmm(o.s.time)}</b>${courseTag(o.s.course)}${o.s.club!=='auteuil'?'<span class="lbl">Beaugrenelle</span>':''}</span>
+function inviteRows(p){return invitesFor(p).map(o=>`<div class="rb"><span class="aw"><span class="lbl">${esc(pname(o.from))} t’invite</span><b>${DAYS[o.s.day].slice(0,3)}. ${hhmm(o.s.time)}</b>${courseTag(o.s.course)}${clubNote(o.s)?'<span class="lbl">'+clubNote(o.s)+'</span>':''}</span>
     <span class="rbp"><button class="btn sm" data-act="invyes" data-id="${o.s.id}" data-p="${p}">J’y vais</button><button class="btn ghost sm" data-act="invno" data-id="${o.s.id}" data-p="${p}">Non merci</button></span></div>`).join('')}
 function isPinned(s){return s.cat&&(week().pins||{})[s.cat]===s.id}
 function sessionCard(c,r,opts){const s=r.s,bk=(week().booked||{})[s.id]||null,done=opts.booked&&isDone(ui.week,s);
   if(r.suggest)return `<button class="sess sug c-${c}" data-act="solo" data-p="${opts.me}" data-cat="${c}" data-id="${s.id}">
     <span class="sc">${CATLBL[c]}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
-    <span class="smeta">${esc(s.coach.split(' · ')[0])}${s.dur?' · '+s.dur+' min':''}${s.club!=='auteuil'?' · Beaugrenelle':''}</span>
+    <span class="smeta">${esc(s.coach.split(' · ')[0])}${s.dur?' · '+s.dur+' min':''}${clubNote(s)?' · '+clubNote(s):''}</span>
     <span class="keep">Retenir</span><span class="ss">${r.w.length?'Avec '+esc(r.w.map(x=>pname(x.p)).join(' et ')):r.also&&r.also.length?'Proposé aussi à '+esc(r.also.map(pname).join(' et ')):'Proposé à la place du cours du groupe'}</span></button>`;
   return `<button class="sess c-${c} ${opts.booked&&!r.away&&shortOf(s,r.w)?'pb':''} ${r.away?'away':''}" data-act="slot" data-id="${s.id}">
     <span class="sc">${esc(r.label||CATLBL[c]||'Salle')}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta">${esc(s.coach.split(' · ')[0])}${s.dur?' · '+s.dur+' min':''}</span>
-    ${avs(r.w,bk)}${done?'<span class="ss warn">Fait · réinscrites ?</span>':bookShort(s)}${placesTxt(s,r.w)}${s.club!=='auteuil'?'<span class="ss">À Beaugrenelle</span>':''}${isPinned(s)?'<span class="ss">Cours choisi</span>':''}${r.away?'<span class="ss">Sans toi</span>':''}</button>`}
+    ${avs(r.w,bk)}${done?'<span class="ss warn">Fait · réinscrites ?</span>':bookShort(s)}${placesTxt(s,r.w)}${clubNote(s)?'<span class="ss '+(s.club==='inconnu'?'warn':'')+'">'+(s.club==='inconnu'?clubNote(s):'À Beaugrenelle')+'</span>':''}${isPinned(s)?'<span class="ss">Cours choisi</span>':''}${r.away?'<span class="ss">Sans toi</span>':''}</button>`}
 function strip(pick,opts){const byDay={},add=(d,c,r)=>(byDay[d]=byDay[d]||[]).push([c,r]);
   const me=opts&&opts.me,mine=w=>!me||w.some(x=>x.p===me&&x.ok),so=week().solo||{};
   const sugDays=[];
@@ -467,7 +469,7 @@ function renderPlanning(){
     list.forEach(s=>{const w=who(s),n=w.filter(x=>x.ok).length;if(ui.together&&n<3)return;
       col+=`<button class="slot c-${s.cat||'x'} ${n===0?'dim':''} ${inPlan.has(s.id)?'inplan':''}" data-act="slot" data-id="${s.id}">
         <span class="t">${hhmm(s.time)}</span><span class="n">${courseTag(s.course)}</span>
-        <span class="dots" aria-label="${n} sur 3 peuvent venir">${w.map(x=>`<i class="${x.ok?'on':''}"></i>`).join('')}</span>${s.club!=='auteuil'?'<span class="pl">Beaugrenelle</span>':''}${placesTxt(s,w)}</button>`});
+        <span class="dots" aria-label="${n} sur 3 peuvent venir">${w.map(x=>`<i class="${x.ok?'on':''}"></i>`).join('')}</span>${clubNote(s)?'<span class="pl '+(s.club==='inconnu'?'warn':'')+'">'+clubNote(s)+'</span>':''}${placesTxt(s,w)}</button>`});
     h+=`<div class="day ${ui.day===d?'cur':''}" data-d="${d}"><div class="dh"><b>${DAYS[d].slice(0,3)}</b>${keyDate(ui.week,d).getDate()}</div>${col||'<span class="none">Rien</span>'}</div>`}
   return h+`</div></section>`}
 
@@ -545,12 +547,12 @@ function renderDlg(){
       <button class="btn" data-act="gymsave" ${PEOPLE.some(p=>g.who[p])?'':'disabled'}>Ajouter à notre semaine</button></div>`;return}
   if(dlgPick){const {d,b}=dlgPick;
     const list=c=>clubSlots(c).filter(x=>x.day===d&&x.band===b&&x.cat).map(x=>`<button class="alt ${isPinned(x)?'cur':''}" data-act="pin" data-id="${x.id}"><span class="aw"><b>${hhmm(x.time)}</b>${courseTag(x.course)}</span><span class="lbl">${esc(x.coach.split(' · ')[0])}</span></button>`).join('');
-    const A=list('auteuil'),B=list('beaugrenelle');
+    const A=list('auteuil'),B=list('beaugrenelle'),X=WEEKDATA[ui.week]?list('inconnu'):'';
     box.innerHTML=`<div class="dlg"><div class="dh2"><div><h3>${DAYS[d]} ${keyDate(ui.week,d).getDate()}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
       <div class="chipsrow">${BANDS.map((t,i)=>`<button class="chipbtn" data-act="pickband" data-v="${i}" aria-pressed="${i===b}">${t}</button>`).join('')}</div>
       <div class="row between"><span class="lbl">Lieu</span><span class="seg sm" role="group" aria-label="Lieu">${[['','Les deux'],['auteuil','Auteuil'],['beaugrenelle','Beaugrenelle']].map(([k,l])=>`<button data-act="place" data-d="${d}" data-b="${b}" data-v="${k}" aria-pressed="${(lieuAt(d,b)||'')===k}">${l}</button>`).join('')}</span></div>
       <div class="lbl">Ou un cours précis</div>
-      ${A?`<div class="lbl">Auteuil</div><div class="alts">${A}</div>`:''}${B?`<div class="lbl">Beaugrenelle</div><div class="alts">${B}</div>`:''}${A||B?'':'<p class="none">Aucun cours sur ce créneau.</p>'}
+      ${A?`<div class="lbl">Auteuil</div><div class="alts">${A}</div>`:''}${B?`<div class="lbl">Beaugrenelle</div><div class="alts">${B}</div>`:''}${X?`<div class="lbl">Club à voir sur l’appli FDS</div><div class="alts">${X}</div>`:''}${A||B||X?'':'<p class="none">Aucun cours sur ce créneau.</p>'}
       <button class="btn ghost sm" data-act="resetcell" data-d="${d}" data-b="${b}" ${cellPins(d,b).length||lieuAt(d,b)?'':'disabled'}>Réinitialiser ce créneau</button></div>`;return}
   if(dlgCat){box.innerHTML=`<div class="dlg"><div class="dh2"><h3>Ajouter un cours ${CATLBL[dlgCat]}</h3><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>${altList(dlgCat,null,6)}</div>`;return}
   const s=slotById(dlgSlot);if(!s){closeDlg();return}
@@ -567,18 +569,18 @@ function renderDlg(){
       ${canInvite(x)?`<button class="btn sm ${inv[x.p]==='ask'?'':'ghost'}" data-act="invite" data-id="${s.id}" data-p="${x.p}">${inv[x.p]==='ask'?'Invitée · annuler':inv[x.p]==='no'?'A dit non · réinviter':'Inviter'}</button>`:''}
       ${(isGym?x.ok:booked[x.p]||(inPlan&&x.ok)||solos.some(o=>o.p===x.p))&&(!ui.me||x.p===ui.me||booked[x.p])?`<button class="btn sm ${booked[x.p]?'done':'ghost'}" ${ui.me&&x.p!==ui.me?'disabled':''} data-act="book" data-id="${s.id}" data-p="${x.p}" aria-pressed="${!!booked[x.p]}">${booked[x.p]?'Réservé ✓':'Réservé ?'}</button>`:''}</div>`).join('')}</div>
     ${inPlan&&!done?w.filter(x=>!x.ok&&(!ui.me||x.p===ui.me)).map(x=>{const cur=((week().solo||{})[x.p]||{})[s.cat],cs=cur&&slotById(cur),opts2=soloOptions(x.p,s.cat,pk,4).filter(o=>!cs||o.id!==cs.id);
-      const row=(o,kept)=>`<div class="alt"><span class="aw"><b>${DAYS[o.day].slice(0,3)}. ${hhmm(o.time)}</b>${courseTag(o.course)}${o.club!=='auteuil'?'<span class="lbl">Beaugrenelle</span>':''}${(n=>n.length?'<span class="lbl">avec '+esc(n.map(q=>pname(q.p)).join(' et '))+'</span>':o.withs&&o.withs.length?'<span class="lbl">proposé aussi à '+esc(o.withs.map(pname).join(' et '))+'</span>':'')(soloList().filter(q=>q.s.id===o.id&&q.p!==x.p))}</span>
+      const row=(o,kept)=>`<div class="alt"><span class="aw"><b>${DAYS[o.day].slice(0,3)}. ${hhmm(o.time)}</b>${courseTag(o.course)}${clubNote(o)?'<span class="lbl">'+clubNote(o)+'</span>':''}${(n=>n.length?'<span class="lbl">avec '+esc(n.map(q=>pname(q.p)).join(' et '))+'</span>':o.withs&&o.withs.length?'<span class="lbl">proposé aussi à '+esc(o.withs.map(pname).join(' et '))+'</span>':'')(soloList().filter(q=>q.s.id===o.id&&q.p!==x.p))}</span>
         <span class="rbp">${avs(who(slotById(o.id)))}<button class="btn sm ${kept?'ghost':''}" data-act="${kept?'unsolo':'solo'}" data-p="${x.p}" data-cat="${s.cat}" data-id="${o.id}">${kept?'Retirer':'Retenir'}</button></span></div>`;
       return cs||opts2.length?`<div class="lbl">${ui.me===x.p?'À la place, pour toi':'À la place, pour '+esc(pname(x.p))}</div><div class="alts">${cs?row(cs,true):''}${opts2.map(o=>row(o,false)).join('')}</div>`
         :`<p class="none">Aucun autre créneau ${CATLBL[s.cat]} possible pour ${esc(pname(x.p))} cette semaine.</p>`}).join(''):''}
     ${solos.filter(o=>!ui.me||o.p===ui.me).map(o=>{const alt=soloOptions(o.p,o.c,pk,4).filter(a=>a.id!==s.id).slice(0,3);
-      return alt.length?`<div class="lbl">${ui.me===o.p?'Changer pour':'Changer pour '+esc(pname(o.p))+' :'}</div><div class="alts">${alt.map(a=>`<button class="alt" data-act="solo" data-p="${o.p}" data-cat="${o.c}" data-id="${a.id}"><span class="aw"><b>${DAYS[a.day].slice(0,3)}. ${hhmm(a.time)}</b>${courseTag(a.course)}${a.club!=='auteuil'?'<span class="lbl">Beaugrenelle</span>':''}</span>${avs(who(slotById(a.id)))}</button>`).join('')}</div>`:''}).join('')}
+      return alt.length?`<div class="lbl">${ui.me===o.p?'Changer pour':'Changer pour '+esc(pname(o.p))+' :'}</div><div class="alts">${alt.map(a=>`<button class="alt" data-act="solo" data-p="${o.p}" data-cat="${o.c}" data-id="${a.id}"><span class="aw"><b>${DAYS[a.day].slice(0,3)}. ${hhmm(a.time)}</b>${courseTag(a.course)}${clubNote(a)?'<span class="lbl">'+clubNote(a)+'</span>':''}</span>${avs(who(slotById(a.id)))}</button>`).join('')}</div>`:''}).join('')}
     ${solos.map(o=>`<button class="btn ghost sm" data-act="unsolo" data-p="${o.p}" data-cat="${o.c}">Retirer le créneau de ${esc(pname(o.p))}</button>`).join('')}
     <div class="row between" ${isGym?'hidden':''}><span class="lbl">${b.st==='past'?'Cours passé':seen?'Places restantes vues dans l’appli':'Places visibles une fois le cours de la semaine d’avant terminé'}</span>${seen&&b.st!=='past'?placesCtl(s):''}</div>
     ${b.st==='soon'&&!isGym?`<div class="lbl">Inscriptions dès ${b.dOpen===1?'demain':esc(b.lbl)}</div>`:''}
     ${done?`<div class="lbl">Réinscrites pour la semaine suivante ?</div><div class="rbs">${rebookRows(ui.week).split('<div class="rb">').filter(x=>x.includes('data-id="'+s.id+'"')).map(x=>'<div class="rb">'+x).join('')}</div>`:''}
     ${inPlan&&!done?`<div class="lbl">Remplacer par</div>${altList(s.cat,s.id,4)}<button class="btn ghost sm" data-act="unplan" data-v="${s.cat}">Retirer de notre semaine</button>`:''}
-    ${!inPlan&&s.cat&&!isGym&&!solos.length&&b.st!=='past'?(alts=>alts.length?`<div class="lbl">Autres cours ${CATLBL[s.cat]} à la même heure</div><div class="alts">${alts.map(x=>`<button class="alt" data-act="slot" data-id="${x.s.id}"><span class="aw"><b>${DAYS[x.s.day].slice(0,3)}. ${hhmm(x.s.time)}</b>${courseTag(x.s.course)}${x.s.club!=='auteuil'?'<span class="lbl">Beaugrenelle</span>':''}</span>${avs(x.w)}</button>`).join('')}</div>`:'')(candidates().filter(x=>x.cat===s.cat&&x.day===s.day&&x.band===s.band&&x.id!==s.id).map(x=>({s:x,w:who(x)}))):''}
+    ${!inPlan&&s.cat&&!isGym&&!solos.length&&b.st!=='past'?(alts=>alts.length?`<div class="lbl">Autres cours ${CATLBL[s.cat]} à la même heure</div><div class="alts">${alts.map(x=>`<button class="alt" data-act="slot" data-id="${x.s.id}"><span class="aw"><b>${DAYS[x.s.day].slice(0,3)}. ${hhmm(x.s.time)}</b>${courseTag(x.s.course)}${clubNote(x.s)?'<span class="lbl">'+clubNote(x.s)+'</span>':''}</span>${avs(x.w)}</button>`).join('')}</div>`:'')(candidates().filter(x=>x.cat===s.cat&&x.day===s.day&&x.band===s.band&&x.id!==s.id).map(x=>({s:x,w:who(x)}))):''}
     ${isPinned(s)?`<button class="btn ghost sm" data-act="unpin" data-v="${s.cat}">Ne plus imposer ce cours</button>`:''}
     ${forMe?`<button class="btn" data-act="solo" data-p="${ui.me}" data-cat="${s.cat}" data-id="${s.id}">Retenir pour ${esc(pname(ui.me))}</button>`:''}
     ${inPlan||forMe?'':s.cat?`<button class="btn" data-act="setplan" data-cat="${s.cat}" data-id="${s.id}">Mettre dans notre semaine</button>`:''}</div>`}
