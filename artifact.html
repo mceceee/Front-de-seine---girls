@@ -581,7 +581,7 @@ function absentTxt(w){const out=w.filter(x=>!x.ok);if(!out.length)return 'Toutes
 function bookShort(s){const b=booking(s);
   /* Le cours de la semaine d'avant a lieu aujourd'hui et n'est pas fini : les places seront visibles juste après. */
   if(b.st==='soon'&&!s.gym&&+keyDate(shiftWeek(ui.week,-1),s.day)===+today0()&&!isDone(shiftWeek(ui.week,-1),s)){const e=s.min+(s.dur||55);
-    return `<span class="ss warn">Places à noter ${e>=1020?'ce soir':'aujourd’hui'} après ${Math.floor(e/60)}h${String(e%60).padStart(2,'0')}</span>`}
+    return `<span class="ss warn">Voir le nombre de places disponibles ${e>=1020?'ce soir':'aujourd’hui'} après ${Math.floor(e/60)}h${String(e%60).padStart(2,'0')}</span>`}
   return b.st==='open'?`<span class="ss ok">Inscriptions ouvertes</span>`:b.st==='soon'?`<span class="ss">Ouvre ${b.dOpen===1?'demain':esc(b.lbl)}</span>`:`<span class="ss">Passé</span>`}
 
 function renderTop(){
