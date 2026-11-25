@@ -416,7 +416,11 @@ const BANDS=['7h00','8h15','9h30 – 10h45','12h00 – 13h15','14h45 – 16h00',
 const NB=BANDS.length;
 function bandOf(min){return min<480?0:min<540?1:min<720?2:min<840?3:min<1020?4:min<1080?5:min<1170?6:min<1230?7:8}
 const MODES={B:'Bureau',T:'TT',L:'Libre',X:'Indispo'};
-const PRESET={B:'000100221',T:'110200221',L:'112111111',X:'000000000'};
+/* 17h15 compte comme la soirée : dispo les jours de bureau et de télétravail. */
+const OLD_PRESET={B:'000100221',T:'110200221'};
+/* Un jour resté sur l'ancien réglage par défaut suit le nouveau ; un jour modifié à la main n'est pas touché. */
+function normAvail(a,m){let r='';for(let d=0;d<7;d++){const c=a.slice(d*NB,d*NB+NB);r+=OLD_PRESET[m[d]]===c?PRESET[m[d]]:c}return r}
+const PRESET={B:'000101221',T:'110201221',L:'112111111',X:'000000000'};
 const DEFAULT_MODES='BBBBBLL';
 const DEFAULT_AVAIL=DEFAULT_MODES.split('').map(m=>PRESET[m]).join('');
 const PEOPLE=['p1','p2','p3'];
@@ -520,10 +524,10 @@ const pname=p=>NAMES[p];
 const initial=p=>{const n=NAMES[p];for(let k=1;k<=3;k++){const me=n.slice(0,k).toLowerCase();if(PEOPLE.every(q=>q===p||NAMES[q].slice(0,k).toLowerCase()!==me))return n.slice(0,k)}return n.slice(0,2)};
 function availOf(p,k){const w=week(k).avail;const o=w&&w[p];const pr=profile(p);
   const a=(o&&o.a)||pr.avail||DEFAULT_AVAIL, m=(o&&o.m)||pr.modes||DEFAULT_MODES;
-  return {a:a.length===7*NB?a:DEFAULT_AVAIL,m:m.length===7?m:DEFAULT_MODES,custom:!!o}}
+  const m2=m.length===7?m:DEFAULT_MODES;return {a:a.length===7*NB?normAvail(a,m2):DEFAULT_AVAIL,m:m2,custom:!!o}}
 /* La semaine type seule, sans tenir compte d'une semaine personnalisée. */
 function typeAvail(p){const pr=profile(p),a=pr.avail||DEFAULT_AVAIL,m=pr.modes||DEFAULT_MODES;
-  return {a:a.length===7*NB?a:DEFAULT_AVAIL,m:m.length===7?m:DEFAULT_MODES,custom:false}}
+  const m2=m.length===7?m:DEFAULT_MODES;return {a:a.length===7*NB?normAvail(a,m2):DEFAULT_AVAIL,m:m2,custom:false}}
 /* Ce qu'on affiche et modifie dans l'onglet Dispos, selon l'onglet « Semaine type » ou « Semaine du … ». */
 function editAvail(p){return ui.scope==='week'?availOf(p):typeAvail(p)}
 /* Les envies valent pour la semaine affichée seulement ; ailleurs tout est « Ok ». */
