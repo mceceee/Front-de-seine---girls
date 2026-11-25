@@ -175,7 +175,8 @@ function today0(){const n=new Date();return new Date(n.getFullYear(),n.getMonth(
 function booking(s){const cls=keyDate(ui.week,s.day),open=keyDate(ui.week,s.day-BOOK_AHEAD),t=today0();
   const dOpen=Math.round((open-t)/864e5),dCls=Math.round((cls-t)/864e5);
   const lbl=DSHORT[(open.getDay()+6)%7]+' '+open.getDate()+' '+MONTHS[open.getMonth()];
-  if(dCls<0)return {st:'past',txt:'Cours passé',cls:''};
+  const nw=new Date();
+  if(dCls<0||(dCls===0&&nw.getHours()*60+nw.getMinutes()>=s.min))return {st:'past',txt:'Cours passé',cls:''};
   if(dOpen<=0)return {st:'open',txt:'Inscriptions ouvertes',cls:'ok',open,lbl};
   return {st:'soon',txt:'Inscription dès '+(dOpen===1?'demain':lbl),cls:'warn',open,lbl,dOpen}}
 /* Dispos de la semaine à confirmer avant la première ouverture d'inscriptions (le lundi s'ouvre le mardi d'avant). */
@@ -415,12 +416,14 @@ function renderSemaine(){
   if(rb)h+=`<section class="blk"><div class="hd"><h2>Réinscrites pour cette semaine ?</h2></div><div class="rbs">${rb}</div></section>`;
   /* Les options pour les catégories qui manquent, posées en pointillés sur leur jour. */
   const options=[],seen={};
-  st.miss.forEach(([c])=>plans.forEach(pl=>{const r=pl.pick[c];if(r&&!seen[r.s.id]){seen[r.s.id]=1;options.push({c,r})}}));
+  const hide=!!wk.hideOpts;
+  if(!hide)st.miss.forEach(([c])=>plans.forEach(pl=>{const r=pl.pick[c];if(r&&!seen[r.s.id]){seen[r.s.id]=1;options.push({c,r})}}));
   h+=`<section class="blk"><div class="hd"><h2>Notre semaine</h2>
+      ${st.miss.length?`<button class="btn ghost sm" data-act="toggleopts">${hide?'Afficher les options':'Masquer les options'}</button>`:''}
       <button class="btn ghost sm" data-act="gymadd">Ajouter une séance de salle</button></div>
     ${(f=>f?`<div class="rbs fix">${f}</div>`:'')(fixRows(st.pick))}
     ${strip(st.pick,{booked:true,gyms,solos:soloList(),me:ui.me,options})}
-    ${st.miss.length?`<p class="none">${options.length?'En pointillés : les options pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ').replace(/, ([^,]*)$/,' et $1')+'. Un clic ajoute le cours ; un jour vide permet d’en choisir un autre.':'Aucune option trouvée pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ')+' : élargissez vos dispos ou cliquez sur un jour vide.'}</p>`:''}</section>`;
+    ${st.miss.length&&!hide?`<p class="none">${options.length?'En pointillés : les options pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ').replace(/, ([^,]*)$/,' et $1')+'. Un clic ajoute le cours ; un jour vide permet d’en choisir un autre.':'Aucune option trouvée pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ')+' : élargissez vos dispos ou cliquez sur un jour vide.'}</p>`:''}</section>`;
   const off=offPlanRows();
   if(off)h+=`<section class="blk"><div class="hd"><h2>Réservations de sécurité</h2><span class="sub">Hors plan : à garder ou à annuler dans l’appli</span></div><div class="alts">${off}</div></section>`;
   return h}
@@ -713,6 +716,7 @@ document.addEventListener('click',e=>{
     else if((week().plan||{})[sl.cat]===sl.id)patch.out={[sl.id]:{[d.p]:null}};else patch.solo={[d.p]:{[sl.cat]:sl.id}};
     save(weekPath(),patch);toast('C’est noté : '+sl.course+' de '+DAYS[sl.day].toLowerCase()+'.')}
   else if(a==='invno'){const d=el.dataset;save(weekPath(),{invites:{[d.id]:{to:{[d.p]:'no'}}}})}
+  else if(a==='toggleopts'){save(weekPath(),{hideOpts:week().hideOpts?null:true})}
   else if(a==='gymadd'){const wh={};PEOPLE.forEach(p=>wh[p]=ui.me?p===ui.me:true);dlgGym={d:0,t:'18:30',who:wh,club:'auteuil'};dlgSlot=null;dlgCat=null;dlgPick=null;openDlg();return}
   else if(a==='gymday'){if(dlgGym)dlgGym.d=+v;renderDlg();return}
   else if(a==='gymtime'){if(dlgGym)dlgGym.t=v;renderDlg();return}
