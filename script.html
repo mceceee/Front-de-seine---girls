@@ -560,6 +560,7 @@ function renderDlg(){
     ${b.st==='soon'&&!isGym?`<div class="lbl">Inscriptions dès ${b.dOpen===1?'demain':esc(b.lbl)}</div>`:''}
     ${done?`<div class="lbl">Réinscrites pour la semaine suivante ?</div><div class="rbs">${rebookRows(ui.week).split('<div class="rb">').filter(x=>x.includes('data-id="'+s.id+'"')).map(x=>'<div class="rb">'+x).join('')}</div>`:''}
     ${inPlan&&!done?`<div class="lbl">Remplacer par</div>${altList(s.cat,s.id,4)}<button class="btn ghost sm" data-act="unplan" data-v="${s.cat}">Retirer de notre semaine</button>`:''}
+    ${!inPlan&&s.cat&&!isGym&&!solos.length&&b.st!=='past'?(alts=>alts.length?`<div class="lbl">Autres options ${CATLBL[s.cat]}</div><div class="alts">${alts.map(x=>`<button class="alt" data-act="slot" data-id="${x.s.id}"><span class="aw"><b>${DAYS[x.s.day].slice(0,3)}. ${hhmm(x.s.time)}</b>${courseTag(x.s.course)}${x.s.club!=='auteuil'?'<span class="lbl">Beaugrenelle</span>':''}</span>${avs(x.w)}</button>`).join('')}</div>`:'')(bestAlts(s.cat,s.id,4)):''}
     ${isPinned(s)?`<button class="btn ghost sm" data-act="unpin" data-v="${s.cat}">Ne plus imposer ce cours</button>`:''}
     ${forMe?`<button class="btn" data-act="solo" data-p="${ui.me}" data-cat="${s.cat}" data-id="${s.id}">Retenir pour ${esc(pname(ui.me))}</button>`:''}
     ${inPlan||forMe?'':s.cat?`<button class="btn" data-act="setplan" data-cat="${s.cat}" data-id="${s.id}">Mettre dans notre semaine</button>`:''}</div>`}
