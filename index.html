@@ -735,7 +735,7 @@ function strip(pick,opts){const byDay={},add=(d,c,r)=>(byDay[d]=byDay[d]||[]).pu
   ((opts&&opts.gyms)||[]).forEach(g=>{const w=gymWho(g);if(mine(w))add(g.day,'x',{s:g,w,n:w.filter(x=>x.ok).length})});
   const grp={};((opts&&opts.solos)||[]).forEach(o=>{const k=o.c+'|'+o.s.id;(grp[k]=grp[k]||{c:o.c,s:o.s,ps:[]}).ps.push(o.p)});
   Object.values(grp).forEach(g=>{if(me&&!g.ps.includes(me))return;
-    add(g.s.day,g.c,{s:g.s,w:PEOPLE.map(p=>({p,a:1,pr:1,ok:g.ps.includes(p),solo:true})),n:g.ps.length,label:g.ps.map(pname).join(' + ')+' · '+CATLBL[g.c]})});
+    add(g.s.day,g.c,{s:g.s,w:PEOPLE.map(p=>({p,a:1,pr:1,ok:g.ps.includes(p),solo:true})),n:g.ps.length})});
   ((opts&&opts.invs)||[]).forEach(o=>add(o.s.day,o.s.cat||'x',{s:o.s,w:o.s.gym?gymWho(o.s):who(o.s),n:0,invite:o.from}));
   ((opts&&opts.options)||[]).forEach(o=>add(o.r.s.day,o.c,Object.assign({},o.r,{option:true})));
   opts=Object.assign({pick},opts||{});
@@ -793,17 +793,20 @@ function renderSemaine(){
   if(rb)h+=`<section class="blk"><div class="hd"><h2>Réinscrites pour cette semaine ?</h2></div><div class="rbs">${rb}</div></section>`;
   /* Les options pour les catégories qui manquent, posées en pointillés sur leur jour. */
   const options=[],seen={};
+  /* Catégories encore à trouver : pas dans la semaine, et pas déjà couvertes par un créneau à part (le mien, ou celui des trois). */
+  const soloL=soloList(),covered=c=>ui.me?soloL.some(o=>o.p===ui.me&&o.c===c):PEOPLE.every(p=>soloL.some(o=>o.p===p&&o.c===c));
+  const miss=st.miss.filter(([c])=>!covered(c)),soloIds=new Set(soloL.map(o=>o.s.id));
   const hide=!!wk.hideOpts;
-  if(!hide)st.miss.forEach(([c])=>plans.forEach(pl=>{const r=pl.pick[c];if(r&&!seen[r.s.id]){seen[r.s.id]=1;options.push({c,r})}}));
+  if(!hide)miss.forEach(([c])=>plans.forEach(pl=>{const r=pl.pick[c];if(r&&!seen[r.s.id]&&!soloIds.has(r.s.id)){seen[r.s.id]=1;options.push({c,r})}}));
   /* Pas assez de jours pour un trio complet : on propose quand même les meilleurs cours de chaque catégorie manquante. */
-  if(!hide&&!options.length)st.miss.forEach(([c])=>by[c].filter(r=>!dayTaken(c,r.s.day)).slice(0,3).forEach(r=>{if(!seen[r.s.id]){seen[r.s.id]=1;options.push({c,r})}}));
+  if(!hide&&!options.length)miss.forEach(([c])=>by[c].filter(r=>!dayTaken(c,r.s.day)).slice(0,3).forEach(r=>{if(!seen[r.s.id]&&!soloIds.has(r.s.id)){seen[r.s.id]=1;options.push({c,r})}}));
   h+=`<section class="blk"><div class="hd"><h2>Notre semaine</h2>
-      ${st.miss.length?`<button class="btn ghost sm" data-act="toggleopts">${hide?'Afficher les options':'Masquer les options'}</button>`:''}
+      ${miss.length?`<button class="btn ghost sm" data-act="toggleopts">${hide?'Afficher les options':'Masquer les options'}</button>`:''}
       <button class="btn ghost sm" data-act="gymadd">Ajouter une séance de salle</button></div>
     ${(f=>f?`<div class="rbs fix">${f}</div>`:'')(fixRows(st.pick))}
     ${strip(st.pick,{booked:true,gyms,solos:soloList(),me:ui.me,options,invs:ui.me?invitesFor(ui.me):[]})}
     <span class="legend"><span>${av('p1','bk','')}Réservé</span><span>${av('p1','on','')}Vient</span><span>${av('p1','ask','')}Invitée</span><span>${av('p1','no','')}A décliné</span><span>${av('p1','free','')}Dispo</span><span>${av('p1','off','')}Pas dispo</span></span>
-    <p class="none">${hide?'Options masquées.':st.miss.length&&!options.length?'Aucune option trouvée pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ')+' : élargissez vos dispos ou cliquez sur un jour vide.':'En pointillés : les options'+(st.miss.length?' pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ').replace(/, ([^,]*)$/,' et $1'):'')+'. Un clic ajoute le cours ; un jour vide permet d’en choisir un autre.'}</p></section>`;
+    <p class="none">${hide?'Options masquées.':miss.length&&!options.length?'Aucune option trouvée pour '+miss.map(([c,l])=>l.toLowerCase()).join(', ')+' : élargissez vos dispos ou cliquez sur un jour vide.':'En pointillés : les options'+(miss.length?' pour '+miss.map(([c,l])=>l.toLowerCase()).join(', ').replace(/, ([^,]*)$/,' et $1'):'')+'. Un clic ajoute le cours ; un jour vide permet d’en choisir un autre.'}</p></section>`;
   const off=offPlanRows();
   if(off)h+=`<section class="blk"><div class="hd"><h2>Réservations de sécurité</h2><span class="sub">Hors plan : à garder ou à annuler dans l’appli</span></div><div class="alts">${off}</div></section>`;
   return h}
