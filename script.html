@@ -344,7 +344,12 @@ function soloHints(c,r,pick,me){if(!pick||!CATLBL[c]||r.label)return '';const so
   return r.w.filter(x=>!x.ok&&(!me||x.p===me)&&!(so[x.p]&&so[x.p][c])).map(x=>{const a=soloFor(x.p,c,pick);
     return a?`<span class="ss solo">${esc(pname(x.p))} : ${DAYS[a.day].slice(0,3).toLowerCase()}. ${hhmm(a.time)} ${esc(a.course)}</span>`:''}).join('')}
 /* week.invites[créneau] = {from:'p1', to:{p2:'ask'|'yes'|'no'}} */
-function invitesFor(p){const iv=week().invites||{};return Object.keys(iv).filter(id=>iv[id]&&iv[id].to&&iv[id].to[p]==='ask'&&slotById(id)&&!isDone(ui.week,slotById(id))).map(id=>({s:slotById(id),from:iv[id].from}))}
+/* Déjà de la partie : le cours est dans sa semaine (groupe, créneau perso, salle) ou elle l'a réservé. */
+function hasIt(p,sl){const wk=week();if(sl.gym)return !!(gymPart(sl.id.slice(4))||{})[p];
+  if(((wk.booked||{})[sl.id]||{})[p])return true;
+  if(((wk.solo||{})[p]||{})[sl.cat]===sl.id)return true;
+  return (wk.plan||{})[sl.cat]===sl.id&&who(sl).some(x=>x.p===p&&x.ok)}
+function invitesFor(p){const iv=week().invites||{};return Object.keys(iv).filter(id=>iv[id]&&iv[id].to&&iv[id].to[p]==='ask'&&slotById(id)&&!isDone(ui.week,slotById(id))&&!hasIt(p,slotById(id))).map(id=>({s:slotById(id),from:iv[id].from}))}
 function inviteRows(p){return invitesFor(p).map(o=>`<div class="rb"><span class="aw"><span class="lbl">${esc(pname(o.from))} t’invite</span><b>${DAYS[o.s.day].slice(0,3)}. ${hhmm(o.s.time)}</b>${courseTag(o.s.course)}${clubNote(o.s)?'<span class="lbl">'+clubNote(o.s)+'</span>':''}</span>
     <span class="rbp"><button class="btn sm" data-act="invyes" data-id="${o.s.id}" data-p="${p}">J’y vais</button><button class="btn ghost sm" data-act="invno" data-id="${o.s.id}" data-p="${p}">Non merci</button></span></div>`).join('')}
 function isPinned(s){return s.cat&&(week().pins||{})[s.cat]===s.id}
