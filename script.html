@@ -451,6 +451,8 @@ function bestAlts(cat,cur,n){const plan=week().plan||{};
 /* Remplacer une séance : d'abord les autres cours de la catégorie le même jour, puis le même cours à d'autres moments. */
 function altRow(a,cat,rm){return `<button class="alt" data-act="setplan" data-cat="${cat}" data-id="${a.s.id}" ${rm&&rm!==cat?`data-rm="${rm}"`:''}>
     <span class="aw"><b>${DAYS[a.s.day].slice(0,3)}. ${hhmm(a.s.time)}</b>${courseTag(a.s.course)}${clubNote(a.s)?'<span class="lbl">'+clubNote(a.s)+'</span>':''}</span>${avs(a.w)}</button>`}
+/* Un cours noté complet reste visible, en retrait : un clic ouvre son détail pour corriger les places. */
+function fullRow(x){return `<button class="alt full" data-act="slot" data-id="${x.id}"><span class="aw"><b>${DAYS[x.day].slice(0,3)}. ${hhmm(x.time)}</b>${courseTag(x.course)}<span class="lbl">${clubNote(x)}</span></span><span class="pl bad">Complet</span></button>`}
 const FILTER_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-6.2 7.4V19l-3.6-1.8v-4.8z"/></svg>';
 const PARTS=[['all','Tout'],['am','Matin'],['pm','Aprem'],['eve','Soirée']];
 const inPart=(min,p)=>p==='am'?min<720:p==='pm'?min>=720&&min<1020:p==='eve'?min>=1020:true;
@@ -471,10 +473,13 @@ function replaceLists(cat,sl){const f=rfState(cat),cats=f.cats.length?f.cats:CAT
   const byTime=(a,b)=>a.s.day-b.s.day||a.s.min-b.s.min||a.s.course.localeCompare(b.s.course)||(a.s.club<b.s.club?-1:1),by=recommend().by;
   const same=[].concat(...cats.map(c=>by[c])).filter(a=>a.s.id!==sl.id&&a.s.day===sl.day&&!shortOf(a.s,a.w)
     &&(!f.parts.length||f.parts.some(p=>inPart(a.s.min,p)))&&(!f.clubs.length||f.clubs.includes(a.s.club))&&f.who.every(p=>a.w.some(x=>x.p===p&&x.ok))).sort(byTime);
+  const fulls=candidates().filter(x=>x.id!==sl.id&&x.day===sl.day&&x.cat&&cats.includes(x.cat)&&placesOf(x.id)===0&&booking(x).st!=='past'
+    &&(!f.parts.length||f.parts.some(p=>inPart(x.min,p)))&&(!f.clubs.length||f.clubs.includes(x.club))).map(x=>({s:x,full:true}));
+  const rows=same.concat(fulls).sort(byTime);
   const other=by[cat].filter(a=>a.s.id!==sl.id&&a.s.course===sl.course&&a.s.day!==sl.day&&!dayTaken(cat,a.s.day)&&!shortOf(a.s,a.w)).sort(byTime);
   return `<div class="lbl">Remplacer par, le même jour</div>
     ${filterBar(f)}
-    ${same.length?`<div class="alts">${same.map(a=>altRow(a,a.s.cat,cat)).join('')}</div>`:`<p class="none">Aucun cours ne correspond à ces filtres ce jour-là.</p>`}
+    ${rows.length?`<div class="alts">${rows.map(a=>a.full?fullRow(a.s):altRow(a,a.s.cat,cat)).join('')}</div>`:`<p class="none">Aucun cours ne correspond à ces filtres ce jour-là.</p>`}
     ${cats.some(c=>c!==cat)?`<p class="none">Choisir un cours d’une autre catégorie remplace cette séance ${CATLBL[cat]}.</p>`:''}
     ${other.length?`<div class="lbl">${esc(sl.course)} un autre jour</div><div class="alts">${other.map(a=>altRow(a,cat)).join('')}</div>`:''}`}
 function altList(cat,cur,n){const alts=bestAlts(cat,cur,n);
@@ -624,7 +629,7 @@ function renderDlg(){
       .sort((a,b)=>a.s.min-b.s.min||a.s.course.localeCompare(b.s.course)||(a.s.club<b.s.club?-1:1));
     box.innerHTML=`<div class="dlg"><div class="dh2"><div><span class="lbl">Choisir un cours</span><h3>${DAYS[d]} ${keyDate(ui.week,d).getDate()}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
       ${filterBar(f)}
-      ${all.length?`<div class="alts">${all.map(a=>`<button class="alt ${isPinned(a.s)?'cur':''}" data-act="pin" data-id="${a.s.id}"><span class="aw"><b>${hhmm(a.s.time)}</b>${courseTag(a.s.course)}<span class="lbl">${clubNote(a.s)}</span></span>${avs(a.w)}</button>`).join('')}</div>`:`<p class="none">${+keyDate(ui.week,d)===+today0()?'Plus aucun cours à venir aujourd’hui avec ces filtres.':'Aucun cours ne correspond à ces filtres ce jour-là.'}</p>`}
+      ${all.length?`<div class="alts">${all.map(a=>placesOf(a.s.id)===0?fullRow(a.s):`<button class="alt ${isPinned(a.s)?'cur':''}" data-act="pin" data-id="${a.s.id}"><span class="aw"><b>${hhmm(a.s.time)}</b>${courseTag(a.s.course)}<span class="lbl">${clubNote(a.s)}</span></span>${avs(a.w)}</button>`).join('')}</div>`:`<p class="none">${+keyDate(ui.week,d)===+today0()?'Plus aucun cours à venir aujourd’hui avec ces filtres.':'Aucun cours ne correspond à ces filtres ce jour-là.'}</p>`}
       ${pinsDay?`<button class="btn ghost sm" data-act="resetcell" data-d="${d}">Ne plus imposer de cours ce jour-là</button>`:''}</div>`;return}
   if(dlgCat){box.innerHTML=`<div class="dlg"><div class="dh2"><h3>Ajouter un cours ${CATLBL[dlgCat]}</h3><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>${altList(dlgCat,null,6)}</div>`;return}
   const s=slotById(dlgSlot);if(!s){closeDlg();return}
@@ -654,7 +659,7 @@ function renderDlg(){
     ${solos.filter(o=>!ui.me||o.p===ui.me).map(o=>{const alt=soloOptions(o.p,o.c,pk,4).filter(a=>a.id!==s.id).slice(0,3);
       return alt.length?`<div class="lbl">${ui.me===o.p?'Changer pour':'Changer pour '+esc(pname(o.p))+' :'}</div><div class="alts">${alt.map(a=>`<button class="alt" data-act="solo" data-p="${o.p}" data-cat="${o.c}" data-id="${a.id}"><span class="aw"><b>${DAYS[a.day].slice(0,3)}. ${hhmm(a.time)}</b>${courseTag(a.course)}${clubNote(a)?'<span class="lbl">'+clubNote(a)+'</span>':''}</span>${avs(who(slotById(a.id)))}</button>`).join('')}</div>`:''}).join('')}
     ${solos.map(o=>`<button class="btn ghost sm" data-act="unsolo" data-p="${o.p}" data-cat="${o.c}">Retirer le créneau de ${esc(pname(o.p))}</button>`).join('')}
-    <div class="row between" ${isGym?'hidden':''}><span class="lbl">${b.st==='past'?'Cours passé':seen?'Places restantes vues dans l’appli':'Places visibles une fois le cours de la semaine d’avant terminé'}</span>${seen&&b.st!=='past'?placesCtl(s):''}</div>
+    <div class="row between" ${isGym?'hidden':''}><span class="lbl">${b.st==='past'?'Cours passé':seen||placesOf(s.id)!==null?'Places restantes vues dans l’appli':'Places visibles une fois le cours de la semaine d’avant terminé'}</span>${(seen||placesOf(s.id)!==null)&&b.st!=='past'?placesCtl(s):''}</div>
     ${b.st==='soon'&&!isGym?`<div class="lbl">Inscriptions dès ${b.dOpen===1?'demain':esc(b.lbl)}</div>`:''}
     ${inPlan&&!done?`${replaceLists(s.cat,s)}<button class="btn ghost sm" data-act="unplan" data-v="${s.cat}">${PEOPLE.some(p=>p!==ui.me&&w.some(x=>x.go&&x.ok&&x.p===p))&&w.some(x=>x.go&&x.ok&&x.p===ui.me)?'Me retirer de ce cours':'Retirer de la semaine'}</button>`:''}
     ${!inPlan&&s.cat&&!isGym&&!solos.length&&b.st!=='past'?(alts=>alts.length?`<div class="lbl">Autres cours ${CATLBL[s.cat]} à la même heure</div><div class="alts">${alts.map(x=>`<button class="alt" data-act="slot" data-id="${x.s.id}"><span class="aw"><b>${DAYS[x.s.day].slice(0,3)}. ${hhmm(x.s.time)}</b>${courseTag(x.s.course)}${clubNote(x.s)?'<span class="lbl">'+clubNote(x.s)+'</span>':''}</span>${avs(x.w)}</button>`).join('')}</div>`:'')(candidates().filter(x=>x.cat===s.cat&&x.day===s.day&&x.band===s.band&&x.id!==s.id&&booking(x).st!=='past').map(x=>({s:x,w:who(x)}))):''}
@@ -708,7 +713,7 @@ document.addEventListener('click',e=>{
   else if(a==='rftog'){const d=ui.rfDraft||[];ui.rfDraft=d.includes(v)?d.filter(x=>x!==v):d.concat(v);renderDlg();return}
   else if(a==='rfclear'){ui.rfDraft=[];renderDlg();return}
   else if(a==='rfsave'){if(ui.rfOpen){const f=rfState(rfBase());f[ui.rfOpen]=(ui.rfDraft||[]).slice();ui.rf=f}ui.rfOpen=null;renderDlg();return}
-  else if(a==='slot'){ui.rf=null;ui.rfOpen=null;dlgSlot=el.dataset.id;dlgCat=null;openDlg();return}
+  else if(a==='slot'){ui.rf=null;ui.rfOpen=null;dlgSlot=el.dataset.id;dlgCat=null;dlgPick=null;dlgInv=null;openDlg();return}
   else if(a==='pin'){const sl=slotById(el.dataset.id),p=week().plan||{};
     /* Un cours choisi à la main va directement dans la semaine. Un seul cours par jour : il remplace celui du même jour. */
     const patch={plan:{[sl.cat]:sl.id},by:{[sl.cat]:ui.me||null},pins:{[sl.cat]:null}};if(ui.me)patch.go={[sl.id]:{[ui.me]:true}};
