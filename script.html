@@ -329,7 +329,9 @@ function invitesFor(p){const iv=week().invites||{};return Object.keys(iv).filter
 function inviteRows(p){return invitesFor(p).map(o=>`<div class="rb"><span class="aw"><span class="lbl">${esc(pname(o.from))} t’invite</span><b>${DAYS[o.s.day].slice(0,3)}. ${hhmm(o.s.time)}</b>${courseTag(o.s.course)}${clubNote(o.s)?'<span class="lbl">'+clubNote(o.s)+'</span>':''}</span>
     <span class="rbp"><button class="btn sm" data-act="invyes" data-id="${o.s.id}" data-p="${p}">J’y vais</button><button class="btn ghost sm" data-act="invno" data-id="${o.s.id}" data-p="${p}">Non merci</button></span></div>`).join('')}
 function isPinned(s){return s.cat&&(week().pins||{})[s.cat]===s.id}
-function sessionCard(c,r,opts){const s=r.s,bk=(week().booked||{})[s.id]||null,done=opts.booked&&isDone(ui.week,s);
+function sessionCard(c,r,opts){
+  /* Plus rien à faire : toutes celles qui viennent ont réservé, ou moi dans ma vue. */
+  const bk0=(week().booked||{})[r.s.id]||{},att0=r.w.filter(x=>x.ok),settled=(att0.length>0&&att0.every(x=>bk0[x.p]))||!!(opts.me&&bk0[opts.me]);const s=r.s,bk=(week().booked||{})[s.id]||null,done=opts.booked&&isDone(ui.week,s);
   if(r.suggest)return `<button class="sess sug c-${c}" data-act="solo" data-p="${opts.me}" data-cat="${c}" data-id="${s.id}">
     <span class="sc">${CATLBL[c]}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta">${esc(s.coach.split(' · ')[0])}${s.dur?' · '+s.dur+' min':''}${clubNote(s)?' · '+clubNote(s):''}</span>
@@ -337,7 +339,7 @@ function sessionCard(c,r,opts){const s=r.s,bk=(week().booked||{})[s.id]||null,do
   return `<button class="sess c-${c} ${opts.booked&&!r.away&&shortOf(s,r.w)?'pb':''} ${r.away?'away':''}" ${!opts.booked&&CATLBL[c]?'draggable="true"':''} data-act="slot" data-id="${s.id}">
     <span class="sc">${esc(r.label||CATLBL[c]||'Salle')}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta">${esc(s.coach.split(' · ')[0])}${s.dur?' · '+s.dur+' min':''}</span>
-    ${avs(r.w,bk)}${done?(rebookPending(ui.week,s,r.w.filter(x=>x.ok).map(x=>x.p))?`<span class="ss warn">${ui.me?'Réinscrite ?':'Réinscrites ?'}</span>`:''):bookShort(s)}${placesTxt(s,r.w)}${clubNote(s)&&!s.gym?'<span class="ss '+(s.club==='inconnu'?'warn':'')+'">'+(s.club==='inconnu'?clubNote(s):'À Beaugrenelle')+'</span>':''}${opts.booked&&CATLBL[c]&&!r.label&&r.w.some(x=>x.own&&x.ok)&&r.w.filter(x=>x.ok).length===1?`<span class="ss warn">${opts.me&&r.w.some(x=>x.own&&x.p===opts.me)?'Tu es seule pour l’instant':esc(pname(r.w.find(x=>x.own).p))+' est seule pour l’instant'}</span>`:''}${isPinned(s)?'<span class="ss">Cours choisi</span>':''}${r.away?'<span class="ss">Sans toi</span>':''}</button>`}
+    ${avs(r.w,bk)}${done?(rebookPending(ui.week,s,r.w.filter(x=>x.ok).map(x=>x.p))?`<span class="ss warn">${ui.me?'Réinscrite ?':'Réinscrites ?'}</span>`:''):settled?'':bookShort(s)}${settled?'':placesTxt(s,r.w)}${clubNote(s)&&!s.gym?'<span class="ss '+(s.club==='inconnu'?'warn':'')+'">'+(s.club==='inconnu'?clubNote(s):'À Beaugrenelle')+'</span>':''}${opts.booked&&CATLBL[c]&&!r.label&&r.w.some(x=>x.own&&x.ok)&&r.w.filter(x=>x.ok).length===1?`<span class="ss warn">${opts.me&&r.w.some(x=>x.own&&x.p===opts.me)?'Tu es seule pour l’instant':esc(pname(r.w.find(x=>x.own).p))+' est seule pour l’instant'}</span>`:''}${r.away?'<span class="ss">Sans toi</span>':''}</button>`}
 function strip(pick,opts){const byDay={},add=(d,c,r)=>(byDay[d]=byDay[d]||[]).push([c,r]);
   const me=opts&&opts.me,mine=w=>!me||w.some(x=>x.p===me&&x.ok),so=week().solo||{};
   const sugDays=[];
