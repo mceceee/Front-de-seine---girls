@@ -631,7 +631,7 @@ function sessionCard(c,r,opts){const s=r.s,bk=(week().booked||{})[s.id]||null,do
   return `<button class="sess c-${c} ${opts.booked&&!r.away&&shortOf(s,r.w)?'pb':''} ${r.away?'away':''}" data-act="slot" data-id="${s.id}">
     <span class="sc">${esc(r.label||CATLBL[c]||'Salle')}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta">${esc(s.coach.split(' · ')[0])}${s.dur?' · '+s.dur+' min':''}</span>
-    ${avs(r.w,bk)}${done?'<span class="ss warn">Fait · réinscrites ?</span>':bookShort(s)}${placesTxt(s,r.w)}${clubNote(s)?'<span class="ss '+(s.club==='inconnu'?'warn':'')+'">'+(s.club==='inconnu'?clubNote(s):'À Beaugrenelle')+'</span>':''}${isPinned(s)?'<span class="ss">Cours choisi</span>':''}${r.away?'<span class="ss">Sans toi</span>':''}</button>`}
+    ${avs(r.w,bk)}${done?(rebookPending(ui.week,s,r.w.filter(x=>x.ok).map(x=>x.p))?`<span class="ss warn">${ui.me?'Réinscrite ?':'Réinscrites ?'}</span>`:''):bookShort(s)}${placesTxt(s,r.w)}${clubNote(s)?'<span class="ss '+(s.club==='inconnu'?'warn':'')+'">'+(s.club==='inconnu'?clubNote(s):'À Beaugrenelle')+'</span>':''}${isPinned(s)?'<span class="ss">Cours choisi</span>':''}${r.away?'<span class="ss">Sans toi</span>':''}</button>`}
 function strip(pick,opts){const byDay={},add=(d,c,r)=>(byDay[d]=byDay[d]||[]).push([c,r]);
   const me=opts&&opts.me,mine=w=>!me||w.some(x=>x.p===me&&x.ok),so=week().solo||{};
   const sugDays=[];
@@ -665,8 +665,11 @@ function confirmBanner(){const c=confirmInfo(),miss=PEOPLE.filter(p=>!c.conf[p])
    Une réinscription est une réservation de la semaine cible ; tant qu'elle n'est pas dans le plan, c'est une sécurité. */
 function isDone(weekKey,s){const d=keyDate(weekKey,s.day),t=today0();if(d<t)return true;if(d>t)return false;
   const n=new Date();return n.getHours()*60+n.getMinutes()>=s.min+(s.dur||55)}
+/* La question « réinscrite ? » reste-t-elle à poser ? Pour moi si mon prénom est sélectionné, sinon pour l'une des participantes. */
+function rebookPending(srcWeek,sl,parts){const tw=week(shiftWeek(srcWeek,1)),ans=p=>!!(((tw.booked||{})[sl.id]||{})[p]||((tw.rebookNo||{})[sl.id]||{})[p]);
+  const ps=ui.me?parts.filter(p=>p===ui.me):parts;return ps.some(p=>!ans(p))}
 function rebookRows(srcWeek){const target=shiftWeek(srcWeek,1),plan=week(srcWeek).plan||{},tw=week(target);
-  const done=catsByWeek(c=>plan[c]&&slotById(plan[c])).map(([c])=>plan[c]&&slotById(plan[c])).filter(s=>s&&isDone(srcWeek,s));
+  const done=catsByWeek(c=>plan[c]&&slotById(plan[c])).map(([c])=>plan[c]&&slotById(plan[c])).filter(s=>s&&isDone(srcWeek,s)).filter(s=>rebookPending(srcWeek,s,PEOPLE));
   if(!done.length)return '';
   return done.map(s=>`<div class="rb"><span class="aw"><b>${DAYS[s.day].slice(0,3)}. ${hhmm(s.time)}</b>${courseTag(s.course)}</span>
     <span class="rbp">${PEOPLE.map(p=>{const y=!!(((tw.booked||{})[s.id]||{})[p]),n=!!(((tw.rebookNo||{})[s.id]||{})[p]);
