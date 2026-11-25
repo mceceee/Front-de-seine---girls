@@ -134,6 +134,11 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .sess{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;border-radius:16px;
   padding:11px 10px 11px 12px;background:rgba(255,255,255,.085);overflow:hidden;min-width:0}
 .sess:hover{background:rgba(255,255,255,.15)}
+.sess.opt{background:transparent;border:1.5px dashed color-mix(in srgb,var(--cc) 55%,transparent)}
+.sess.opt:hover{background:rgba(255,255,255,.09);border-color:var(--cc)}
+.sess.opt .keep{background:var(--fill2);color:var(--fg)}
+.sess.opt:hover .keep{background:var(--sel);color:var(--on-sel)}
+.rb.soon{opacity:.75}
 .sess.sug{background:transparent;border:1.5px dashed rgba(255,255,255,.35)}
 .keep{display:inline-block;white-space:nowrap;margin:7px 0 4px;background:var(--sel);color:var(--on-sel);font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px}
 .sess.sug:hover{background:rgba(255,255,255,.08)}

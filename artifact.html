@@ -134,6 +134,11 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .sess{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;border-radius:16px;
   padding:11px 10px 11px 12px;background:rgba(255,255,255,.085);overflow:hidden;min-width:0}
 .sess:hover{background:rgba(255,255,255,.15)}
+.sess.opt{background:transparent;border:1.5px dashed color-mix(in srgb,var(--cc) 55%,transparent)}
+.sess.opt:hover{background:rgba(255,255,255,.09);border-color:var(--cc)}
+.sess.opt .keep{background:var(--fill2);color:var(--fg)}
+.sess.opt:hover .keep{background:var(--sel);color:var(--on-sel)}
+.rb.soon{opacity:.75}
 .sess.sug{background:transparent;border:1.5px dashed rgba(255,255,255,.35)}
 .keep{display:inline-block;white-space:nowrap;margin:7px 0 4px;background:var(--sel);color:var(--on-sel);font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px}
 .sess.sug:hover{background:rgba(255,255,255,.08)}
@@ -648,6 +653,9 @@ function isPinned(s){return s.cat&&(week().pins||{})[s.cat]===s.id}
 function sessionCard(c,r,opts){
   /* Plus rien à faire : toutes celles qui viennent ont réservé, ou moi dans ma vue. */
   const bk0=(week().booked||{})[r.s.id]||{},att0=r.w.filter(x=>x.ok),settled=(att0.length>0&&att0.every(x=>bk0[x.p]))||!!(opts.me&&bk0[opts.me]);const s=r.s,bk=(week().booked||{})[s.id]||null,done=opts.booked&&isDone(ui.week,s);
+  if(r.option)return `<button class="sess opt c-${c}" data-act="setplan" data-cat="${c}" data-id="${s.id}" aria-label="Ajouter ${esc(s.course)} ${DAYS[s.day].toLowerCase()} ${hhmm(s.time)}">
+    <span class="sc">${CATLBL[c]}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
+    <span class="smeta ${s.club==='inconnu'?'warn':''}">${esc(CLUBS[s.club])}</span>${avs(r.w)}<span class="keep">+ Ajouter</span></button>`;
   if(r.suggest)return `<button class="sess sug c-${c}" data-act="solo" data-p="${opts.me}" data-cat="${c}" data-id="${s.id}">
     <span class="sc">${CATLBL[c]}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta ${s.club==='inconnu'?'warn':''}">${esc(CLUBS[s.club])}</span>
@@ -669,6 +677,7 @@ function strip(pick,opts){const byDay={},add=(d,c,r)=>(byDay[d]=byDay[d]||[]).pu
   const grp={};((opts&&opts.solos)||[]).forEach(o=>{const k=o.c+'|'+o.s.id;(grp[k]=grp[k]||{c:o.c,s:o.s,ps:[]}).ps.push(o.p)});
   Object.values(grp).forEach(g=>{if(me&&!g.ps.includes(me))return;
     add(g.s.day,g.c,{s:g.s,w:PEOPLE.map(p=>({p,a:1,pr:1,ok:g.ps.includes(p),solo:true})),n:g.ps.length,label:g.ps.map(pname).join(' + ')+' · '+CATLBL[g.c]})});
+  ((opts&&opts.options)||[]).forEach(o=>add(o.r.s.day,o.c,Object.assign({},o.r,{option:true})));
   opts=Object.assign({pick},opts||{});
   const canAdd=!!opts.booked;
   let h=`<div class="week7 ${canAdd?'pickable':''}">`;
@@ -720,26 +729,21 @@ function renderSemaine(){
   let h=Store.ready?confirmBanner():'';
   const inv=ui.me?inviteRows(ui.me):'';
   if(inv)h+=`<div class="rbs invite">${inv}</div>`;
+  const td=todoRows(st.pick);
+  if(td)h+=`<section class="blk"><div class="hd"><h2>À faire</h2></div><div class="rbs">${td}</div></section>`;
   const rb=rebookRows(shiftWeek(ui.week,-1));
   if(rb)h+=`<section class="blk"><div class="hd"><h2>Réinscrites pour cette semaine ?</h2></div><div class="rbs">${rb}</div></section>`;
-  const total=st.have.length*3,done=st.have.reduce((n,[c])=>n+Object.values(((wk.booked||{})[st.pick[c].s.id])||{}).filter(Boolean).length,0);
+  /* Les options pour les catégories qui manquent, posées en pointillés sur leur jour. */
+  const options=[],seen={};
+  st.miss.forEach(([c])=>plans.forEach(pl=>{const r=pl.pick[c];if(r&&!seen[r.s.id]){seen[r.s.id]=1;options.push({c,r})}}));
   h+=`<section class="blk"><div class="hd"><h2>Notre semaine</h2>
       <button class="btn ghost sm" data-act="gymadd">Ajouter une séance de salle</button></div>
-    ${(f=>f?`<div class="rbs todo">${f}</div>`:'')(checkRows(st.pick))}
     ${(f=>f?`<div class="rbs fix">${f}</div>`:'')(fixRows(st.pick))}
-    ${strip(st.pick,{booked:true,gyms,solos:soloList(),me:ui.me})}
-    ${total?`<div class="ft"><span>${esc(nextDeadline(wk.plan||{},wk))}</span></div>`:''}</section>`;
+    ${strip(st.pick,{booked:true,gyms,solos:soloList(),me:ui.me,options})}
+    ${st.miss.length?`<p class="none">${options.length?'En pointillés : les options pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ').replace(/, ([^,]*)$/,' et $1')+'. Un clic ajoute le cours ; un jour vide permet d’en choisir un autre.':'Aucune option trouvée pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ')+' : élargissez vos dispos ou cliquez sur un jour vide.'}</p>`:''}</section>`;
   const off=offPlanRows();
   if(off)h+=`<section class="blk"><div class="hd"><h2>Réservations de sécurité</h2><span class="sub">Hors plan : à garder ou à annuler dans l’appli</span></div><div class="alts">${off}</div></section>`;
-  const shown=st.lock?st.miss:CATS;
-  h+=`<section class="blk"><div class="hd"><h2>${st.lock?'Pour compléter':st.have.length===3?'Autres propositions':'Propositions'}</h2></div>`;
-  if(!plans.length)h+=`<p class="none">Aucune combinaison possible avec un cours par catégorie. Élargissez vos dispos ou retirez un « Non ».</p>`;
-  else h+=plans.map((pl,i)=>{const n3=shown.filter(([c])=>pl.pick[c].n===3).length,sub={};shown.forEach(([c])=>sub[c]=pl.pick[c]);
-      const dd=CATS.map(([c])=>pl.pick[c].s.day).sort((a,b)=>a-b),tight=dd.some((x,k)=>k&&x-dd[k-1]===1);
-      return `<article class="prop"><div class="ph"><span class="letter">${'ABC'[i]}</span>
-        <span class="psub">${n3===shown.length?'Toutes les trois':n3?n3+' cours sur '+shown.length+' à trois':'Aucun cours à trois'}${tight?' · deux jours de suite':''}</span>
-        <button class="btn sm" data-act="choose" data-i="${i}">${st.lock?'Ajouter':'Choisir'}</button></div>${strip(sub,{me:ui.me})}</article>`}).join('');
-  return h+`</section>`}
+  return h}
 function catsByWeek(get){return CATS.slice().sort((a,b)=>{const x=get(a[0]),y=get(b[0]);
   if(!x||!y)return (x?0:1)-(y?0:1);return x.day-y.day||x.min-y.min})}
 function nextDeadline(chosen,wk){
@@ -776,6 +780,18 @@ function checkRows(pick){return catsByWeek(c=>pick[c]&&pick[c].s).filter(([c])=>
 /* Pas assez de places : soit certaines laissent la leur (et reçoivent un créneau à part), soit tout le groupe change de cours. */
 /* Le cours ne tient que par celle qui l'a ajouté : on le signale, sans rien changer tout seul. */
 function alone(r){const ok=r.w.filter(x=>x.ok);return ok.length===1&&ok[0].own?ok[0].p:null}
+/* Ce qu'il y a à faire, dans l'ordre de la semaine : noter les places, s'inscrire, ou ce qui arrive ce soir / demain. */
+function todoRows(pick){const out=[],prevW=shiftWeek(ui.week,-1);
+  catsByWeek(c=>pick[c]&&pick[c].s).forEach(([c])=>{const r=pick[c];if(!r||isDone(ui.week,r.s))return;
+    const sl=r.s,b=booking(sl),bk=(week().booked||{})[sl.id]||{},att=r.w.filter(x=>x.ok),iAm=ui.me&&att.some(x=>x.p===ui.me);
+    const need=ui.me?(iAm&&!bk[ui.me]):att.some(x=>!bk[x.p]);if(!need)return;
+    const name=`<b>${esc(sl.course)}</b> de ${DAYS[sl.day].toLowerCase()} ${hhmm(sl.time)}`,seen=isDone(prevW,sl);
+    if(seen&&placesOf(sl.id)===null)out.push(`<div class="rb"><span class="aw"><span class="lbl">Places restantes ?</span><span>${name}</span></span><span class="rbp">${placesCtl(sl)}</span></div>`);
+    else if(!seen&&+keyDate(prevW,sl.day)===+today0()){const e=sl.min+(sl.dur||55);
+      out.push(`<div class="rb soon"><span class="aw"><span class="lbl">${e>=1020?'Ce soir':'Aujourd’hui'} après ${Math.floor(e/60)}h${String(e%60).padStart(2,'0')}</span><span>Regarder les places : ${name}</span></span></div>`)}
+    if(b.st==='open')out.push(`<div class="rb"><span class="aw"><span class="lbl">Inscriptions ouvertes</span><span>${name}</span></span><span class="rbp">${ui.me?`<button class="btn sm" data-act="book" data-id="${sl.id}" data-p="${ui.me}">Je suis inscrite</button>`:`<button class="btn ghost sm" data-act="slot" data-id="${sl.id}">Voir</button>`}</span></div>`);
+    else if(b.st==='soon'&&b.dOpen===1)out.push(`<div class="rb soon"><span class="aw"><span class="lbl">Demain</span><span>Ouverture des inscriptions : ${name}</span></span></div>`)});
+  return out.join('')}
 function fixRows(pick){return catsByWeek(c=>pick[c]&&pick[c].s).filter(([c])=>pick[c]&&(pick[c].n===0||alone(pick[c])||shortOf(pick[c].s,pick[c].w))&&!isDone(ui.week,pick[c].s)).map(([c])=>{
   if(pick[c].n===0||alone(pick[c])){const sl=pick[c].s,a=bestAlts(c,sl.id,1)[0],solo=alone(pick[c]);
     return `<div class="rb"><span class="aw"><b>${DAYS[sl.day].slice(0,3)}. ${hhmm(sl.time)}</b>${courseTag(sl.course)}<span class="pl bad">${solo?esc(pname(solo))+' est seule : personne d’autre n’est dispo':'Plus personne n’est dispo'}</span></span>
