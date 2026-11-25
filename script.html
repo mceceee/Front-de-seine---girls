@@ -468,7 +468,7 @@ function renderPlanning(){
   return h+`</div></section>`}
 
 /* La grille des dispos : celle de la semaine affichée (dans la page) ou la semaine type (dans sa fenêtre). */
-function availGrid(p,type,dis){const av_=type?typeAvail(p):availOf(p),t=type?' data-t="1"':'';
+function availGrid(p,type,dis){const av_=type?(dlgType&&dlgType.p===p?dlgType:typeAvail(p)):availOf(p),t=type?' data-t="1"':'';
   let h=`<div class="scroller"><table class="av-t"><thead><tr><th></th>${DAYS.map((d,i)=>`<th>${d.slice(0,3)}${type?'':`<span class="dn">${keyDate(ui.week,i).getDate()}</span>`}</th>`).join('')}</tr>
         <tr><th></th>${DAYS.map((d,i)=>`<td><select id="${type?'t':''}mode${i}" data-act="mode"${t} data-d="${i}" aria-label="${d}" ${dis}>${Object.keys(MODES).map(k=>`<option value="${k}" ${av_.m[i]===k?'selected':''}>${MODES[k]}</option>`).join('')}</select></td>`).join('')}</tr></thead><tbody>`;
   for(let b=0;b<NB;b++){h+=`<tr><th class="rowh">${BANDS[b]}</th>`;
@@ -516,9 +516,10 @@ let dlgSlot=null,dlgCat=null,dlgPick=null,dlgGym=null,dlgType=null;
 function renderDlg(){
   const box=document.getElementById('dlg');
   box.classList&&box.classList.toggle('wide',!!dlgType);
-  if(dlgType){const p=dlgType;
+  if(dlgType){const p=dlgType.p,cur=typeAvail(p),changed=cur.a!==dlgType.a||cur.m!==dlgType.m,ok=Store.ready&&!Store.readonly;
     box.innerHTML=`<div class="dlg"><div class="dh2"><div><h3>Semaine type de ${esc(pname(p))}</h3><span class="lbl">Le point de départ de chaque nouvelle semaine</span></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
-      ${availGrid(p,true,Store.ready&&!Store.readonly?'':'disabled')}</div>`;return}
+      ${availGrid(p,true,ok?'':'disabled')}
+      <div class="row between"><button class="btn ghost" data-act="closedlg">Annuler</button><button class="btn" data-act="typesave" ${ok&&changed?'':'disabled'}>Valider</button></div></div>`;return}
   if(dlgGym){const g=dlgGym;
     box.innerHTML=`<div class="dlg"><div class="dh2"><h3>Séance de salle</h3><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
       <div class="lbl">Jour</div><div class="chipsrow">${DAYS.map((d,i)=>`<button class="chipbtn" data-act="gymday" data-v="${i}" aria-pressed="${g.d===i}">${d.slice(0,3)} ${keyDate(ui.week,i).getDate()}</button>`).join('')}</div>
@@ -577,7 +578,7 @@ document.addEventListener('click',e=>{
   if(lpDone){lpDone=false;return}
   {const b=e.target.closest('[data-act="arm"]');
     if(b&&b.dataset.act==='arm'){const k=b.dataset.v;
-      if(k==='type'){ui.menu=false;ui.arm=null;dlgType=resetWho();dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;renderTop();openDlg();return}
+      if(k==='type'){ui.menu=false;ui.arm=null;{const p=resetWho(),t=typeAvail(p);dlgType={p,a:t.a,m:t.m}}dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;renderTop();openDlg();return}
       if(k==='link'){ui.menu=false;ui.arm=null;const L=Store.link;
         (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(L):Promise.reject()).then(()=>toast('Lien copié. Envoie-le à Coco et Clem.'),()=>toast('Copie impossible : copie l’adresse de la page à la main.'));renderTop();return}
       if(ui.arm!==k){ui.arm=k;render();return}
@@ -643,8 +644,10 @@ document.addEventListener('click',e=>{
   else if(a==='clearplan'){save(weekPath(),{plan:null,solo:null,out:null});ui.swap=null}
   else if(a==='confirm'){const cur=(week().confirmed||{})[ui.edit];save(weekPath(),{confirmed:{[ui.edit]:cur?null:true}});if(!cur)toast('Dispos validées.')}
   else if(a==='resetweek'){save(weekPath(),{avail:{[ui.edit]:null}})}
-  else if(a==='cell'){const type=el.dataset.t==='1',p=type&&dlgType?dlgType:ui.edit,av=type?typeAvail(p):availOf(p),i=+el.dataset.d*NB+ +el.dataset.b;const nv=((+av.a[i]||0)+1)%3;
-    saveAvail(p,av.a.slice(0,i)+nv+av.a.slice(i+1),av.m,type)}
+  else if(a==='typesave'){if(dlgType){const d=dlgType;saveAvail(d.p,d.a,d.m,true);closeDlg();toast('Semaine type de '+pname(d.p)+' enregistrée.')}}
+  else if(a==='cell'&&el.dataset.t==='1'){if(dlgType){const i=+el.dataset.d*NB+ +el.dataset.b,nv=((+dlgType.a[i]||0)+1)%3;dlgType.a=dlgType.a.slice(0,i)+nv+dlgType.a.slice(i+1);renderDlg()}return}
+  else if(a==='cell'){const p=ui.edit,av=availOf(p),i=+el.dataset.d*NB+ +el.dataset.b;const nv=((+av.a[i]||0)+1)%3;
+    saveAvail(p,av.a.slice(0,i)+nv+av.a.slice(i+1),av.m,false)}
   else if(a==='pref'){const p=ui.edit;save('profiles/'+p,{prefs:{[el.dataset.c]:+v}})}
   else return;
   render()});
@@ -656,8 +659,9 @@ document.addEventListener('pointerdown',e=>{const el=e.target.closest&&e.target.
   lpDone=false;clearTimeout(lpT);lpT=setTimeout(()=>{lpDone=true;pickFrom(el)},550)});
 ['pointerup','pointercancel','pointermove'].forEach(t=>document.addEventListener(t,e=>{if(t!=='pointermove'||Math.abs(e.movementX)+Math.abs(e.movementY)>6)clearTimeout(lpT)}));
 document.addEventListener('change',e=>{const el=e.target;const a=el.dataset&&el.dataset.act;
-  if(a==='mode'){const type=el.dataset.t==='1',p=type&&dlgType?dlgType:ui.edit,av=type?typeAvail(p):availOf(p),d=+el.dataset.d,k=el.value;
-    saveAvail(p,av.a.slice(0,d*NB)+PRESET[k]+av.a.slice((d+1)*NB),av.m.slice(0,d)+k+av.m.slice(d+1),type);render()}
+  if(a==='mode'&&el.dataset.t==='1'){if(dlgType){const d=+el.dataset.d,k=el.value;dlgType.a=dlgType.a.slice(0,d*NB)+PRESET[k]+dlgType.a.slice((d+1)*NB);dlgType.m=dlgType.m.slice(0,d)+k+dlgType.m.slice(d+1);renderDlg()}}
+  else if(a==='mode'){const p=ui.edit,av=availOf(p),d=+el.dataset.d,k=el.value;
+    saveAvail(p,av.a.slice(0,d*NB)+PRESET[k]+av.a.slice((d+1)*NB),av.m.slice(0,d)+k+av.m.slice(d+1),false);render()}
   else if(a==='together'){ui.together=el.checked;render()}
 });
 function fromHash(){try{const h=(location.hash||'').slice(1);if(TABS.some(t=>t[0]===h))ui.tab=h}catch(e){}}
