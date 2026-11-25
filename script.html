@@ -664,7 +664,9 @@ function renderDlg(){
         :`<p class="none">Aucun autre créneau ${CATLBL[s.cat]} possible pour ${esc(pname(x.p))} cette semaine.</p>`}).join(''):''}
     ${solos.filter(o=>!ui.me||o.p===ui.me).map(o=>{const alt=soloOptions(o.p,o.c,pk,4).filter(a=>a.id!==s.id).slice(0,3);
       return alt.length?`<div class="lbl">${ui.me===o.p?'Changer pour':'Changer pour '+esc(pname(o.p))+' :'}</div><div class="alts">${alt.map(a=>`<button class="alt" data-act="solo" data-p="${o.p}" data-cat="${o.c}" data-id="${a.id}"><span class="aw"><b>${DAYS[a.day].slice(0,3)}. ${hhmm(a.time)}</b>${courseTag(a.course)}${clubNote(a)?'<span class="lbl">'+clubNote(a)+'</span>':''}</span>${avs(who(slotById(a.id)))}</button>`).join('')}</div>`:''}).join('')}
-    ${solos.map(o=>`<button class="btn ghost sm" data-act="unsolo" data-p="${o.p}" data-cat="${o.c}">Retirer le créneau de ${esc(pname(o.p))}</button>`).join('')}
+    ${solos.length?(ui.rmAsk&&solos.length>1&&ui.me&&solos.some(o=>o.p===ui.me)
+      ?`<div class="subpanel"><h3 style="font-size:16px">Retirer ce créneau ?</h3><div class="row between"><button class="btn ghost" data-act="rmall">Pour toutes</button><button class="btn" data-act="rmme">Juste pour toi</button></div></div>`
+      :`<button class="btn ghost sm" data-act="rmask">Retirer ce créneau</button>`):''}
     <div class="row between" ${isGym?'hidden':''}><span class="lbl">${b.st==='past'?'Cours passé':seen||placesOf(s.id)!==null?'Places restantes vues dans l’appli':'Places visibles une fois le cours de la semaine d’avant terminé'}</span>${(seen||placesOf(s.id)!==null)&&b.st!=='past'?placesCtl(s):''}</div>
     ${b.st==='soon'&&!isGym?`<div class="lbl">Inscriptions dès ${b.dOpen===1?'demain':esc(b.lbl)}</div>`:''}
     ${inPlan&&!done?`${ui.rfShow?`<div class="subpanel"><div class="row between"><h3 style="font-size:16px">Remplacer ce cours</h3><button class="btn ghost sm" data-act="rfshow">Fermer</button></div>${replaceLists(s.cat,s)}</div>`:`<button class="btn ghost" data-act="rfshow">Remplacer ce cours</button>`}<button class="btn ghost sm" data-act="unplan" data-v="${s.cat}">${PEOPLE.some(p=>p!==ui.me&&w.some(x=>x.go&&x.ok&&x.p===p))&&w.some(x=>x.go&&x.ok&&x.p===ui.me)?'Me retirer de ce cours':'Retirer de la semaine'}</button>`:''}
@@ -719,12 +721,17 @@ document.addEventListener('click',e=>{
   else if(a==='invconfirm'){if(dlgInv){const d=dlgInv,to={};Object.keys(d.inv).forEach(p=>{if(d.inv[p])to[p]='ask'});
       const patch=d.patch;if(Object.keys(to).length)patch.invites={[d.id]:{from:ui.me,to}};
       save(weekPath(),patch);const sl=slotById(d.id);closeDlg();toast((sl?sl.course+' de '+DAYS[sl.day].toLowerCase():'Cours')+' ajouté à ta semaine.')}}
+  else if(a==='rmask'||a==='rmme'||a==='rmall'){const id=dlgSlot,ss=soloList().filter(o=>o.s.id===id),mine=ui.me&&ss.some(o=>o.p===ui.me);
+    if(a==='rmask'&&ss.length>1&&mine){ui.rmAsk=true;renderDlg();return}
+    const who2=a==='rmme'||(a==='rmask'&&ss.length>1&&!mine&&false)?ss.filter(o=>o.p===ui.me):a==='rmask'&&ss.length===1?ss:ss;
+    const patch={solo:{},booked:{[id]:{}}};who2.forEach(o=>{(patch.solo[o.p]=patch.solo[o.p]||{})[o.c]=null;patch.booked[id][o.p]=null});
+    save(weekPath(),patch);ui.rmAsk=false;closeDlg();toast(who2.length>1?'Créneau retiré pour toutes.':'Créneau retiré.')}
   else if(a==='rfshow'){ui.rfShow=!ui.rfShow;ui.rfOpen=null;renderDlg();return}
   else if(a==='rfopen'){const k=el.dataset.k;if(ui.rfOpen===k){ui.rfOpen=null}else{ui.rfOpen=k;ui.rfDraft=rfState(rfBase())[k].slice()}renderDlg();return}
   else if(a==='rftog'){const d=ui.rfDraft||[];ui.rfDraft=d.includes(v)?d.filter(x=>x!==v):d.concat(v);renderDlg();return}
   else if(a==='rfclear'){ui.rfDraft=[];renderDlg();return}
   else if(a==='rfsave'){if(ui.rfOpen){const f=rfState(rfBase());f[ui.rfOpen]=(ui.rfDraft||[]).slice();ui.rf=f}ui.rfOpen=null;renderDlg();return}
-  else if(a==='slot'){ui.rf=null;ui.rfOpen=null;ui.rfShow=false;dlgSlot=el.dataset.id;dlgCat=null;dlgPick=null;dlgInv=null;openDlg();return}
+  else if(a==='slot'){ui.rf=null;ui.rfOpen=null;ui.rfShow=false;ui.rmAsk=false;dlgSlot=el.dataset.id;dlgCat=null;dlgPick=null;dlgInv=null;openDlg();return}
   else if(a==='pin'){const sl=slotById(el.dataset.id),p=week().plan||{};
     /* Un cours choisi à la main va directement dans la semaine. Un seul cours par jour : il remplace celui du même jour. */
     const patch={plan:{[sl.cat]:sl.id},by:{[sl.cat]:ui.me||null},pins:{[sl.cat]:null}};if(ui.me)patch.go={[sl.id]:{[ui.me]:true}};
