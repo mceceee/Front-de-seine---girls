@@ -436,9 +436,16 @@ function bestAlts(cat,cur,n){const plan=week().plan||{};
   const days=CATS.filter(([c])=>c!==cat&&plan[c]&&slotById(plan[c])).map(([c])=>slotById(plan[c]).day);
   const tight=d=>days.some(x=>Math.abs(x-d)===1)?1:0;
   return recommend().by[cat].filter(a=>a.s.id!==cur&&!dayTaken(cat,a.s.day)&&!shortOf(a.s,a.w)).sort((a,b)=>tight(a.s.day)-tight(b.s.day)||b.sc-a.sc).slice(0,n||5)}
+/* Remplacer une séance : d'abord les autres cours de la catégorie le même jour, puis le même cours à d'autres moments. */
+function altRow(a,cat){return `<button class="alt" data-act="setplan" data-cat="${cat}" data-id="${a.s.id}">
+    <span class="aw"><b>${DAYS[a.s.day].slice(0,3)}. ${hhmm(a.s.time)}</b>${courseTag(a.s.course)}${clubNote(a.s)?'<span class="lbl">'+clubNote(a.s)+'</span>':''}</span>${avs(a.w)}</button>`}
+function replaceLists(cat,sl){const pool=recommend().by[cat].filter(a=>a.s.id!==sl.id&&!shortOf(a.s,a.w)),byTime=(a,b)=>a.s.day-b.s.day||a.s.min-b.s.min||(a.s.club<b.s.club?-1:1);
+  const same=pool.filter(a=>a.s.day===sl.day).sort(byTime),other=pool.filter(a=>a.s.course===sl.course&&a.s.day!==sl.day&&!dayTaken(cat,a.s.day)).sort(byTime);
+  const blk=(t,l)=>l.length?`<div class="lbl">${t}</div><div class="alts">${l.map(a=>altRow(a,cat)).join('')}</div>`:'';
+  return (blk('Remplacer par, le même jour',same)+blk(sl.course+' un autre jour',other))||'<p class="none">Pas d’autre créneau compatible.</p>'}
 function altList(cat,cur,n){const alts=bestAlts(cat,cur,n);
   return alts.length?`<div class="alts">`+alts.map(a=>`<button class="alt" data-act="setplan" data-cat="${cat}" data-id="${a.s.id}">
-    <span class="aw"><b>${DAYS[a.s.day].slice(0,3)}. ${hhmm(a.s.time)}</b>${courseTag(a.s.course)}</span>${avs(a.w)}</button>`).join('')+`</div>`
+    <span class="aw"><b>${DAYS[a.s.day].slice(0,3)}. ${hhmm(a.s.time)}</b>${courseTag(a.s.course)}${clubNote(a.s)?'<span class="lbl">'+clubNote(a.s)+'</span>':''}</span>${avs(a.w)}</button>`).join('')+`</div>`
     :`<p class="none">Pas d’autre créneau compatible.</p>`}
 /* Séances du plan où il n'y a plus assez de places : on propose le meilleur remplaçant en un geste. */
 /* Dès que le cours de la semaine d'avant est passé, l'appli montre les places : on les demande ici. */
@@ -595,7 +602,7 @@ function renderDlg(){
     ${solos.map(o=>`<button class="btn ghost sm" data-act="unsolo" data-p="${o.p}" data-cat="${o.c}">Retirer le créneau de ${esc(pname(o.p))}</button>`).join('')}
     <div class="row between" ${isGym?'hidden':''}><span class="lbl">${b.st==='past'?'Cours passé':seen?'Places restantes vues dans l’appli':'Places visibles une fois le cours de la semaine d’avant terminé'}</span>${seen&&b.st!=='past'?placesCtl(s):''}</div>
     ${b.st==='soon'&&!isGym?`<div class="lbl">Inscriptions dès ${b.dOpen===1?'demain':esc(b.lbl)}</div>`:''}
-    ${inPlan&&!done?`<div class="lbl">Remplacer par</div>${altList(s.cat,s.id,4)}<button class="btn ghost sm" data-act="unplan" data-v="${s.cat}">Retirer de notre semaine</button>`:''}
+    ${inPlan&&!done?`${replaceLists(s.cat,s)}<button class="btn ghost sm" data-act="unplan" data-v="${s.cat}">Retirer de notre semaine</button>`:''}
     ${!inPlan&&s.cat&&!isGym&&!solos.length&&b.st!=='past'?(alts=>alts.length?`<div class="lbl">Autres cours ${CATLBL[s.cat]} à la même heure</div><div class="alts">${alts.map(x=>`<button class="alt" data-act="slot" data-id="${x.s.id}"><span class="aw"><b>${DAYS[x.s.day].slice(0,3)}. ${hhmm(x.s.time)}</b>${courseTag(x.s.course)}${clubNote(x.s)?'<span class="lbl">'+clubNote(x.s)+'</span>':''}</span>${avs(x.w)}</button>`).join('')}</div>`:'')(candidates().filter(x=>x.cat===s.cat&&x.day===s.day&&x.band===s.band&&x.id!==s.id).map(x=>({s:x,w:who(x)}))):''}
     ${isPinned(s)?`<button class="btn ghost sm" data-act="unpin" data-v="${s.cat}">Ne plus imposer ce cours</button>`:''}
     ${forMe?`<button class="btn" data-act="solo" data-p="${ui.me}" data-cat="${s.cat}" data-id="${s.id}">Retenir pour ${esc(pname(ui.me))}</button>`:''}
