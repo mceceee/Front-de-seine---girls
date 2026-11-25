@@ -8,6 +8,8 @@ const FIREBASE_CONFIG=/*__FB__*/null/*__ENDFB__*/;
 const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 const DAYKEYS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
 const CATS=[['force','Force'],['cardio','Cardio'],['mobilite','Mobilité']];
+/* Semaines (lundi, AAAA-MM-JJ) dont le planning a été mis à jour depuis la page du club. */
+const PLANNING_WEEKS=[];
 const BOOK_AHEAD=6; /* inscriptions ouvertes 6 jours avant le cours */
 const CAT_OF={'SKILL':'force','WOD':'force','TRX FORCE':'force','TRX BENCH':'force','CORE':'force','HYROX':'force',
   'RPM':'cardio','SPRINT':'cardio','BOXING BAG':'cardio','TRX CROSS':'cardio','STRENGTH':'cardio','CEREMONY':'cardio',
@@ -510,12 +512,25 @@ function render(){
   const sel=keep==='nameInput'?[document.activeElement.selectionStart,document.activeElement.selectionEnd,document.activeElement.value]:null;
   document.getElementById('app').innerHTML=ui.tab==='planning'?renderPlanning():ui.tab==='dispos'?renderDispos():ui.tab==='idees'?renderIdees():renderSemaine();
   if(keep){const el=document.getElementById(keep);if(el){if(sel){el.value=sel[2];}el.focus();if(sel)try{el.setSelectionRange(sel[0],sel[1])}catch(e){}}}
-  if(dlgSlot||dlgCat||dlgPick||dlgGym||dlgType)renderDlg()}
+  if(dlgSlot||dlgCat||dlgPick||dlgGym||dlgType||dlgAsk)renderDlg();
+  maybeAsk()}
 
-let dlgSlot=null,dlgCat=null,dlgPick=null,dlgGym=null,dlgType=null;
+let dlgSlot=null,dlgCat=null,dlgPick=null,dlgGym=null,dlgType=null,dlgAsk=null,askShown=false;
+/* Rappel pour Cece seulement : envoyer à Claude la page HTML du planning de la semaine à préparer
+   (celle qui commence dans 7 à 8 jours ; avant, la prochaine si elle n'a pas encore été mise à jour). */
+function askWeek(){const n=today0(),next=mondayKey(new Date(n.getFullYear(),n.getMonth(),n.getDate()+7)),far=mondayKey(new Date(n.getFullYear(),n.getMonth(),n.getDate()+8));
+  return !PLANNING_WEEKS.includes(next)?next:!PLANNING_WEEKS.includes(far)?far:null}
+function maybeAsk(){if(askShown||ui.me!=='p1'||!Store.ready||dlgSlot||dlgCat||dlgPick||dlgGym||dlgType)return;const w=askWeek();if(!w)return;
+  let v=null;try{v=localStorage.getItem('fds:html:'+w)}catch(e){}
+  if(v==='done'||v===fmtKey(today0()))return;askShown=true;dlgAsk=w;openDlg()}
 function renderDlg(){
   const box=document.getElementById('dlg');
   box.classList&&box.classList.toggle('wide',!!dlgType);
+  if(dlgAsk){const w=dlgAsk;
+    box.innerHTML=`<div class="dlg"><div class="dh2"><div><span class="lbl">Rappel pour Cece</span><h3>Planning de la semaine du ${esc(dayLabel(w,0))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
+      <p class="meta">Envoie à Claude la page du club pour cette semaine, en HTML.</p>
+      <ol class="steps"><li>Sur la page « Réserver » du club, affiche la semaine du ${esc(dayLabel(w,0)).replace(/\.$/,'')}.</li><li>Cmd+S, format « Page Web, HTML uniquement ».</li><li>Glisse le fichier dans la conversation avec Claude.</li></ol>
+      <div class="row between"><button class="btn ghost" data-act="asklater" data-v="${w}">Plus tard</button><button class="btn" data-act="askdone" data-v="${w}">C’est envoyé</button></div></div>`;return}
   if(dlgType){const p=dlgType.p,cur=typeAvail(p),changed=cur.a!==dlgType.a||cur.m!==dlgType.m,ok=Store.ready&&!Store.readonly;
     box.innerHTML=`<div class="dlg"><div class="dh2"><div><h3>Semaine type de ${esc(pname(p))}</h3><span class="lbl">Le point de départ de chaque nouvelle semaine</span></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
       ${availGrid(p,true,ok?'':'disabled')}
@@ -566,8 +581,8 @@ function renderDlg(){
     ${forMe?`<button class="btn" data-act="solo" data-p="${ui.me}" data-cat="${s.cat}" data-id="${s.id}">Retenir pour ${esc(pname(ui.me))}</button>`:''}
     ${inPlan||forMe?'':s.cat?`<button class="btn" data-act="setplan" data-cat="${s.cat}" data-id="${s.id}">Mettre dans notre semaine</button>`:''}</div>`}
 function openDlg(){renderDlg();const d=document.getElementById('dlg');if(!d.open)d.showModal()}
-function closeDlg(){dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;const d=document.getElementById('dlg');if(d.open)d.close()}
-document.getElementById('dlg').addEventListener('close',()=>{dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null});
+function closeDlg(){dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null;const d=document.getElementById('dlg');if(d.open)d.close()}
+document.getElementById('dlg').addEventListener('close',()=>{dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null});
 document.getElementById('dlg').addEventListener('click',e=>{if(e.target&&e.target.id==='dlg')closeDlg()});
 
 let toastT;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},3800)}
@@ -610,6 +625,8 @@ document.addEventListener('click',e=>{
   else if(a==='place'){save(weekPath(),{lieu:{[el.dataset.d+'-'+el.dataset.b]:v||null}})}
   else if(a==='resetcell'){const d=+el.dataset.d,b=+el.dataset.b,patch={lieu:{[d+'-'+b]:null},pins:{}};cellPins(d,b).forEach(c=>patch.pins[c]=null);
     save(weekPath(),patch);closeDlg();toast('Créneau réinitialisé.')}
+  else if(a==='asklater'){try{localStorage.setItem('fds:html:'+v,fmtKey(today0()))}catch(x){}closeDlg();return}
+  else if(a==='askdone'){try{localStorage.setItem('fds:html:'+v,'done')}catch(x){}closeDlg();toast('Merci ! Claude met le planning à jour.');return}
   else if(a==='pickband'){if(dlgPick)dlgPick.b=+v;renderDlg();return}
   else if(a==='unpin'){save(weekPath(),{pins:{[v]:null}});closeDlg()}
   else if(a==='solo'){const d=el.dataset;save(weekPath(),{solo:{[d.p]:{[d.cat]:d.id}}});if(dlgSlot)closeDlg();toast('Créneau retenu pour '+pname(d.p)+'. Touche-le pour l’annuler.')}
