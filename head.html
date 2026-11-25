@@ -146,6 +146,9 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .sess:hover .sx,.sess:focus-visible .sx{opacity:1}
 .sx:hover{background:rgba(0,0,0,.7)}
 @media (hover:none){.sx{display:none}}
+.btn.disc{display:flex;align-items:center;justify-content:center;gap:8px}
+.btn.disc svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s}
+.btn.disc[aria-expanded="true"] svg{transform:rotate(180deg)}
 .surebtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .sess.inv,.sess.inv:hover{background:rgba(201,169,255,.24);box-shadow:inset 0 0 0 2px var(--invite);cursor:default}
 .sess.inv .sc{color:var(--invite);display:inline-flex;align-items:center;gap:5px}
