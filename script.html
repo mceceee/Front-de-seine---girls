@@ -390,7 +390,7 @@ function renderSemaine(){
   const rb=rebookRows(shiftWeek(ui.week,-1));
   if(rb)h+=`<section class="blk"><div class="hd"><h2>Réinscrites pour cette semaine ?</h2></div><div class="rbs">${rb}</div></section>`;
   const total=st.have.length*3,done=st.have.reduce((n,[c])=>n+Object.values(((wk.booked||{})[st.pick[c].s.id])||{}).filter(Boolean).length,0);
-  h+=`<section class="blk"><div class="hd"><h2>Notre semaine</h2>${total?`<span class="count ${done===total?'ok':''}">${done}/${total} réservations</span>`:''}
+  h+=`<section class="blk"><div class="hd"><h2>Notre semaine</h2>
       <button class="btn ghost sm" data-act="gymadd">Ajouter une séance de salle</button></div>
     ${(f=>f?`<div class="rbs todo">${f}</div>`:'')(checkRows(st.pick))}
     ${(f=>f?`<div class="rbs fix">${f}</div>`:'')(fixRows(st.pick))}
