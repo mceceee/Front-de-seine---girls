@@ -638,7 +638,7 @@ function strip(pick,opts){const byDay={},add=(d,c,r)=>(byDay[d]=byDay[d]||[]).pu
   opts=Object.assign({pick},opts||{});
   let h=`<div class="week7">`;
   for(let d=0;d<7;d++){const e=(byDay[d]||[]).sort((x,y)=>x[1].s.min-y[1].s.min);
-    h+=`<div class="day ${e.length?'has':'rest'}"><div class="dh"><b>${DAYS[d].slice(0,3)}</b>${keyDate(ui.week,d).getDate()}</div>${e.length?`<div class="cards">${e.map(x=>sessionCard(x[0],x[1],opts||{})).join('')}</div>`:''}</div>`}
+    h+=`<div class="day ${e.length?'has':'rest'}" data-d="${d}"><div class="dh"><b>${DAYS[d].slice(0,3)}</b>${keyDate(ui.week,d).getDate()}</div>${e.length?`<div class="cards">${e.map(x=>sessionCard(x[0],x[1],opts||{})).join('')}</div>`:''}</div>`}
   return h+`</div>`}
 
 function confirmBanner(){const c=confirmInfo(),miss=PEOPLE.filter(p=>!c.conf[p]);
@@ -759,7 +759,7 @@ function renderPlanning(){
       col+=`<button class="slot c-${s.cat||'x'} ${n===0?'dim':''} ${inPlan.has(s.id)?'inplan':''}" data-act="slot" data-id="${s.id}">
         <span class="t">${hhmm(s.time)}</span><span class="n">${courseTag(s.course)}</span>
         <span class="dots" aria-label="${n} sur 3 peuvent venir">${w.map(x=>`<i class="${x.ok?'on':''}"></i>`).join('')}</span>${s.club!=='auteuil'?'<span class="pl">Beaugrenelle</span>':''}${placesTxt(s,w)}</button>`});
-    h+=`<div class="day ${ui.day===d?'cur':''}"><div class="dh"><b>${DAYS[d].slice(0,3)}</b>${keyDate(ui.week,d).getDate()}</div>${col||'<span class="none">Rien</span>'}</div>`}
+    h+=`<div class="day ${ui.day===d?'cur':''}" data-d="${d}"><div class="dh"><b>${DAYS[d].slice(0,3)}</b>${keyDate(ui.week,d).getDate()}</div>${col||'<span class="none">Rien</span>'}</div>`}
   return h+`</div></section>`}
 
 /* La grille des dispos : celle de la semaine affichée (dans la page) ou la semaine type (dans sa fenêtre). */
@@ -824,7 +824,8 @@ function renderDlg(){
   if(dlgPick){const {d,b}=dlgPick;
     const list=c=>clubSlots(c).filter(x=>x.day===d&&x.band===b&&x.cat).map(x=>`<button class="alt ${isPinned(x)?'cur':''}" data-act="pin" data-id="${x.id}"><span class="aw"><b>${hhmm(x.time)}</b>${courseTag(x.course)}</span><span class="lbl">${esc(x.coach.split(' · ')[0])}</span></button>`).join('');
     const A=list('auteuil'),B=list('beaugrenelle');
-    box.innerHTML=`<div class="dlg"><div class="dh2"><div><h3>${DAYS[d]} · ${BANDS[b]}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
+    box.innerHTML=`<div class="dlg"><div class="dh2"><div><h3>${DAYS[d]} ${keyDate(ui.week,d).getDate()}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
+      <div class="chipsrow">${BANDS.map((t,i)=>`<button class="chipbtn" data-act="pickband" data-v="${i}" aria-pressed="${i===b}">${t}</button>`).join('')}</div>
       <div class="row between"><span class="lbl">Lieu</span><span class="seg sm" role="group" aria-label="Lieu">${[['','Les deux'],['auteuil','Auteuil'],['beaugrenelle','Beaugrenelle']].map(([k,l])=>`<button data-act="place" data-d="${d}" data-b="${b}" data-v="${k}" aria-pressed="${(lieuAt(d,b)||'')===k}">${l}</button>`).join('')}</span></div>
       <div class="lbl">Ou un cours précis</div>
       ${A?`<div class="lbl">Auteuil</div><div class="alts">${A}</div>`:''}${B?`<div class="lbl">Beaugrenelle</div><div class="alts">${B}</div>`:''}${A||B?'':'<p class="none">Aucun cours sur ce créneau.</p>'}
@@ -904,6 +905,7 @@ document.addEventListener('click',e=>{
   else if(a==='place'){save(weekPath(),{lieu:{[el.dataset.d+'-'+el.dataset.b]:v||null}})}
   else if(a==='resetcell'){const d=+el.dataset.d,b=+el.dataset.b,patch={lieu:{[d+'-'+b]:null},pins:{}};cellPins(d,b).forEach(c=>patch.pins[c]=null);
     save(weekPath(),patch);closeDlg();toast('Créneau réinitialisé.')}
+  else if(a==='pickband'){if(dlgPick)dlgPick.b=+v;renderDlg();return}
   else if(a==='unpin'){save(weekPath(),{pins:{[v]:null}});closeDlg()}
   else if(a==='solo'){const d=el.dataset;save(weekPath(),{solo:{[d.p]:{[d.cat]:d.id}}});if(dlgSlot)closeDlg();toast('Créneau retenu pour '+pname(d.p)+'. Touche-le pour l’annuler.')}
   else if(a==='unsolo'){const d=el.dataset;save(weekPath(),{solo:{[d.p]:{[d.cat]:null}}});if(dlgSlot&&!(week().plan&&Object.values(week().plan).includes(dlgSlot)))closeDlg()}
@@ -949,10 +951,15 @@ document.addEventListener('click',e=>{
   render()});
 /* Clic droit (ordinateur) ou appui long (téléphone) sur une case : choisir un cours précis à cette heure. */
 let lpT=null,lpDone=false;
-function pickFrom(el){dlgPick={d:+el.dataset.d,b:+el.dataset.b};dlgSlot=null;dlgCat=null;openDlg()}
-document.addEventListener('contextmenu',e=>{const el=e.target.closest&&e.target.closest('.cell');if(!el||el.dataset.t==='1')return;e.preventDefault();pickFrom(el)});
-document.addEventListener('pointerdown',e=>{const el=e.target.closest&&e.target.closest('.cell');if(!el||el.dataset.t==='1'||e.pointerType==='mouse')return;
-  lpDone=false;clearTimeout(lpT);lpT=setTimeout(()=>{lpDone=true;pickFrom(el)},550)});
+function pickTarget(e){const t=e.target;if(!t.closest)return null;
+  const c=t.closest('.cell');if(c)return c.dataset.t==='1'?null:{d:+c.dataset.d,b:+c.dataset.b};
+  const k=t.closest('.sess,.slot');if(k&&k.dataset.id){const sl=slotById(k.dataset.id);if(sl)return {d:sl.day,b:sl.band}}
+  const dy=t.closest('.day');if(dy&&dy.dataset.d!=null&&dy.dataset.d!=='')return {d:+dy.dataset.d,b:6};
+  return null}
+function pickFrom(p){dlgPick=p;dlgSlot=null;dlgCat=null;dlgGym=null;dlgType=null;openDlg()}
+document.addEventListener('contextmenu',e=>{const p=pickTarget(e);if(!p)return;e.preventDefault();pickFrom(p)});
+document.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;const p=pickTarget(e);if(!p)return;
+  lpDone=false;clearTimeout(lpT);lpT=setTimeout(()=>{lpDone=true;pickFrom(p)},550)});
 ['pointerup','pointercancel','pointermove'].forEach(t=>document.addEventListener(t,e=>{if(t!=='pointermove'||Math.abs(e.movementX)+Math.abs(e.movementY)>6)clearTimeout(lpT)}));
 document.addEventListener('change',e=>{const el=e.target;const a=el.dataset&&el.dataset.act;
   if(a==='mode'&&el.dataset.t==='1'){if(dlgType){const d=+el.dataset.d,k=el.value;dlgType.a=dlgType.a.slice(0,d*NB)+PRESET[k]+dlgType.a.slice((d+1)*NB);dlgType.m=dlgType.m.slice(0,d)+k+dlgType.m.slice(d+1);renderDlg()}}
