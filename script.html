@@ -321,7 +321,7 @@ function addPatch(sl,me,o){o=o||{};const p=week().plan||{},patch={plan:{},by:{},
   if(o.replace&&o.replace!==sl.id)dropMine(patch,o.replace,me);
   const free=!p[sl.cat]||patch.plan[sl.cat]===null;
   if(p[sl.cat]===sl.id){const g={};who(sl).forEach(w=>{if(w.ok)g[w.p]=true});g[me]=true;patch.go[sl.id]=g;patch.out={[sl.id]:{[me]:null}}}
-  else if(free&&!o.soloOnly){patch.plan[sl.cat]=sl.id;patch.by[sl.cat]=me;patch.pins[sl.cat]=null;patch.go[sl.id]={[me]:true}}
+  else if(free&&!o.soloOnly&&!soloList().some(x=>x.s.id===sl.id)){patch.plan[sl.cat]=sl.id;patch.by[sl.cat]=me;patch.pins[sl.cat]=null;patch.go[sl.id]={[me]:true}}
   else patch.mine[me][sl.id]=true;
   return patch}
 /* Cours perso de chacune : week.mine[p][créneau] (plusieurs possibles), plus l'ancien week.solo[p][catégorie]. */
@@ -642,14 +642,14 @@ function renderDlg(){
     box.innerHTML=`<div class="dlg sure"><div class="dh2"><div>${q.sub?`<span class="lbl">${esc(q.sub)}</span>`:''}<h3>${esc(q.title)}</h3></div></div>
       <div class="row between"><button class="btn ghost" data-act="sureno">Annuler</button><span class="surebtns">${q.opts.map((o,i)=>`<button class="btn ${i===q.opts.length-1?'':'ghost'}" data-act="sureyes" data-i="${i}">${esc(o.label)}</button>`).join('')}</span></div></div>`;return}
   if(dlgInv){const sl=slotById(dlgInv.id);if(!sl){closeDlg();return}
-    const w=who(sl),inv=dlgInv.inv,n=Object.keys(inv).filter(p=>inv[p]).length;
-    box.innerHTML=`<div class="dlg c-${sl.cat}"><div class="dh2"><div><span class="lbl">Ajouter à ta semaine ?</span><h3>${esc(whenTxt(sl))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Annuler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
+    const w=who(sl),inv=dlgInv.inv,bkd=(week().booked||{})[sl.id]||{},there=w.filter(x=>x.p!==ui.me&&hasIt(x.p,sl)).map(x=>x.p),n=Object.keys(inv).filter(p=>inv[p]&&!there.includes(p)).length,names=there.map(pname).join(' et ');
+    box.innerHTML=`<div class="dlg c-${sl.cat}"><div class="dh2"><div><span class="lbl">${there.length?esc(names)+(there.length>1?' y vont déjà':' y va déjà'):'Ajouter à ta semaine ?'}</span><h3>${esc(whenTxt(sl))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Annuler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
       <p class="meta">${courseTag(sl.course)} <b class="club">${CLUBS[sl.club]}</b></p>
-      <h3 style="font-size:17px">Tu invites quelqu’un ?</h3>
-      <div class="people">${w.filter(x=>x.p!==ui.me).map(x=>`<div class="prow2">${(free=>`<span title="${esc(pname(x.p))}">${av(x.p,inv[x.p]?'ask':free?'free':'off')}</span>
+      ${there.length<w.length-1?`<h3 style="font-size:17px">${there.length?'Tu invites aussi '+esc(w.filter(x=>x.p!==ui.me&&!there.includes(x.p)).map(x=>pname(x.p)).join(' et '))+' ?':'Tu invites quelqu’un ?'}</h3>`:''}
+      <div class="people">${w.filter(x=>x.p!==ui.me).map(x=>there.includes(x.p)?`<div class="prow2"><span title="${esc(pname(x.p))}">${av(x.p,bkd[x.p]?'bk':'on')}</span><span class="ps">${bkd[x.p]?'y va, a réservé':'y va déjà'}</span></div>`:`<div class="prow2">${(free=>`<span title="${esc(pname(x.p))}">${av(x.p,inv[x.p]?'ask':free?'free':'off')}</span>
         <span class="ps">${x.pr===0?'n’aime pas ce cours':x.a===0?'pas dispo à cette heure':'dispo'}</span>
         <button class="btn sm ${inv[x.p]?'':'ghost'}" data-act="invpick" data-p="${x.p}" ${free?'':'disabled'}>${inv[x.p]?'Invitée ✓':'Inviter'}</button>`)(x.a>0&&x.pr>0)}</div>`).join('')}</div>
-      <div class="row between"><button class="btn ghost" data-act="closedlg">Annuler</button><button class="btn" data-act="invconfirm">${n?'Ajouter et inviter':'Ajouter, juste moi'}</button></div></div>`;return}
+      <div class="row between"><button class="btn ghost" data-act="closedlg">Annuler</button><button class="btn" data-act="invconfirm">${there.length?(n?'Rejoindre et inviter':'Rejoindre '+esc(names)):n?'Ajouter et inviter':'Ajouter, juste moi'}</button></div></div>`;return}
   if(dlgAsk){const w=dlgAsk;
     box.innerHTML=`<div class="dlg"><div class="dh2"><div><span class="lbl">Rappel pour Cece</span><h3>Planning de la semaine du ${esc(dayLabel(w,0))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
       <p class="meta">${WEEKDATA[w]?'Ce planning a été relevé en avance : renvoie la page à Claude pour vérifier que rien n’a changé.':'Envoie à Claude la page du club pour cette semaine, en HTML.'}</p>
@@ -782,7 +782,7 @@ document.addEventListener('click',e=>{
   else if(a==='swap'){ui.swap=ui.swap===v?null:v}
   else if(a==='showall'){ui.showAll=true}
   else if(a==='invpick'){if(dlgInv){dlgInv.inv[el.dataset.p]=!dlgInv.inv[el.dataset.p];renderDlg()}return}
-  else if(a==='invconfirm'){if(dlgInv){const d=dlgInv,to={};Object.keys(d.inv).forEach(p=>{if(d.inv[p])to[p]='ask'});
+  else if(a==='invconfirm'){if(dlgInv){const d=dlgInv,to={},sl0=slotById(d.id);Object.keys(d.inv).forEach(p=>{if(d.inv[p]&&!(sl0&&hasIt(p,sl0)))to[p]='ask'});
       const patch=d.patch;if(Object.keys(to).length)patch.invites={[d.id]:{from:ui.me,to}};
       save(weekPath(),patch);const sl=slotById(d.id);closeDlg();toast((sl?sl.course+' de '+DAYS[sl.day].toLowerCase():'Cours')+' ajouté à ta semaine.')}}
   else if(a==='rmask'||a==='rmme'||a==='rmall'){const id=el.dataset.id||dlgSlot,ss=soloList().filter(o=>o.s.id===id),mine=ui.me&&ss.some(o=>o.p===ui.me);
