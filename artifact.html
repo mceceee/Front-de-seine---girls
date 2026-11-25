@@ -217,6 +217,8 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .alt .aw>.tag{grid-column:2;justify-self:start}
 .alt .aw>.lbl,.alt .aw>.pl{grid-column:3;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .alt>.avs,.alt>.rbp,.alt>.btn,.alt>.lbl,.alt>.pl{grid-column:4;justify-self:end}
+.subpanel{display:flex;flex-direction:column;gap:12px;background:var(--recess);border-radius:22px;padding:14px}
+.dlg>.btn.ghost:not(.sm){align-self:stretch}
 .alt.full{opacity:.5}
 .alt.full:hover{opacity:.9}
 .alt+.alt,.rb+.rb{border-top:1px solid var(--line)}
@@ -846,7 +848,7 @@ function replaceLists(cat,sl){const f=rfState(cat),cats=f.cats.length?f.cats:CAT
     &&(!f.parts.length||f.parts.some(p=>inPart(x.min,p)))&&(!f.clubs.length||f.clubs.includes(x.club))).map(x=>({s:x,full:true}));
   const rows=same.concat(fulls).sort(byTime);
   const other=by[cat].filter(a=>a.s.id!==sl.id&&a.s.course===sl.course&&a.s.day!==sl.day&&!dayTaken(cat,a.s.day)&&!shortOf(a.s,a.w)).sort(byTime);
-  return `<div class="lbl">Remplacer par, le même jour</div>
+  return `<div class="lbl">Le même jour</div>
     ${filterBar(f)}
     ${rows.length?`<div class="alts">${rows.map(a=>a.full?fullRow(a.s):altRow(a,a.s.cat,cat)).join('')}</div>`:`<p class="none">Aucun cours ne correspond à ces filtres ce jour-là.</p>`}
     ${cats.some(c=>c!==cat)?`<p class="none">Choisir un cours d’une autre catégorie remplace cette séance ${CATLBL[cat]}.</p>`:''}
@@ -1030,7 +1032,7 @@ function renderDlg(){
     ${solos.map(o=>`<button class="btn ghost sm" data-act="unsolo" data-p="${o.p}" data-cat="${o.c}">Retirer le créneau de ${esc(pname(o.p))}</button>`).join('')}
     <div class="row between" ${isGym?'hidden':''}><span class="lbl">${b.st==='past'?'Cours passé':seen||placesOf(s.id)!==null?'Places restantes vues dans l’appli':'Places visibles une fois le cours de la semaine d’avant terminé'}</span>${(seen||placesOf(s.id)!==null)&&b.st!=='past'?placesCtl(s):''}</div>
     ${b.st==='soon'&&!isGym?`<div class="lbl">Inscriptions dès ${b.dOpen===1?'demain':esc(b.lbl)}</div>`:''}
-    ${inPlan&&!done?`${replaceLists(s.cat,s)}<button class="btn ghost sm" data-act="unplan" data-v="${s.cat}">${PEOPLE.some(p=>p!==ui.me&&w.some(x=>x.go&&x.ok&&x.p===p))&&w.some(x=>x.go&&x.ok&&x.p===ui.me)?'Me retirer de ce cours':'Retirer de la semaine'}</button>`:''}
+    ${inPlan&&!done?`${ui.rfShow?`<div class="subpanel"><div class="row between"><h3 style="font-size:16px">Remplacer ce cours</h3><button class="btn ghost sm" data-act="rfshow">Fermer</button></div>${replaceLists(s.cat,s)}</div>`:`<button class="btn ghost" data-act="rfshow">Remplacer ce cours</button>`}<button class="btn ghost sm" data-act="unplan" data-v="${s.cat}">${PEOPLE.some(p=>p!==ui.me&&w.some(x=>x.go&&x.ok&&x.p===p))&&w.some(x=>x.go&&x.ok&&x.p===ui.me)?'Me retirer de ce cours':'Retirer de la semaine'}</button>`:''}
     ${!inPlan&&s.cat&&!isGym&&!solos.length&&b.st!=='past'?(alts=>alts.length?`<div class="lbl">Autres cours ${CATLBL[s.cat]} à la même heure</div><div class="alts">${alts.map(x=>`<button class="alt" data-act="slot" data-id="${x.s.id}"><span class="aw"><b>${DAYS[x.s.day].slice(0,3)}. ${hhmm(x.s.time)}</b>${courseTag(x.s.course)}${clubNote(x.s)?'<span class="lbl">'+clubNote(x.s)+'</span>':''}</span>${avs(x.w)}</button>`).join('')}</div>`:'')(candidates().filter(x=>x.cat===s.cat&&x.day===s.day&&x.band===s.band&&x.id!==s.id&&booking(x).st!=='past').map(x=>({s:x,w:who(x)}))):''}
     ${isPinned(s)?`<button class="btn ghost sm" data-act="unpin" data-v="${s.cat}">Ne plus imposer ce cours</button>`:''}
     ${forMe?`<button class="btn" data-act="solo" data-p="${ui.me}" data-cat="${s.cat}" data-id="${s.id}">Retenir pour ${esc(pname(ui.me))}</button>`:''}
@@ -1078,11 +1080,12 @@ document.addEventListener('click',e=>{
   else if(a==='scope'){ui.scope=v}
   else if(a==='swap'){ui.swap=ui.swap===v?null:v}
   else if(a==='showall'){ui.showAll=true}
+  else if(a==='rfshow'){ui.rfShow=!ui.rfShow;ui.rfOpen=null;renderDlg();return}
   else if(a==='rfopen'){const k=el.dataset.k;if(ui.rfOpen===k){ui.rfOpen=null}else{ui.rfOpen=k;ui.rfDraft=rfState(rfBase())[k].slice()}renderDlg();return}
   else if(a==='rftog'){const d=ui.rfDraft||[];ui.rfDraft=d.includes(v)?d.filter(x=>x!==v):d.concat(v);renderDlg();return}
   else if(a==='rfclear'){ui.rfDraft=[];renderDlg();return}
   else if(a==='rfsave'){if(ui.rfOpen){const f=rfState(rfBase());f[ui.rfOpen]=(ui.rfDraft||[]).slice();ui.rf=f}ui.rfOpen=null;renderDlg();return}
-  else if(a==='slot'){ui.rf=null;ui.rfOpen=null;dlgSlot=el.dataset.id;dlgCat=null;dlgPick=null;dlgInv=null;openDlg();return}
+  else if(a==='slot'){ui.rf=null;ui.rfOpen=null;ui.rfShow=false;dlgSlot=el.dataset.id;dlgCat=null;dlgPick=null;dlgInv=null;openDlg();return}
   else if(a==='pin'){const sl=slotById(el.dataset.id),p=week().plan||{};
     /* Un cours choisi à la main va directement dans la semaine. Un seul cours par jour : il remplace celui du même jour. */
     const patch={plan:{[sl.cat]:sl.id},by:{[sl.cat]:ui.me||null},pins:{[sl.cat]:null}};if(ui.me)patch.go={[sl.id]:{[ui.me]:true}};
