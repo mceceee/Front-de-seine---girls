@@ -140,6 +140,10 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .sess{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;border-radius:16px;
   padding:11px 10px 11px 12px;background:rgba(255,255,255,.085);overflow:hidden;min-width:0}
 .sess:hover{background:rgba(255,255,255,.15)}
+.sess.inv{background:rgba(106,180,255,.16);box-shadow:inset 0 0 0 1.5px var(--cardio);cursor:default}
+.sess.inv:hover{background:rgba(106,180,255,.16)}
+.sess.inv .sc{color:var(--cardio)}
+.invbtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .sess.opt{background:transparent;border:1.5px dashed color-mix(in srgb,var(--cc) 55%,transparent)}
 .sess.opt:hover{background:rgba(255,255,255,.09);border-color:var(--cc)}
 .sess.opt .keep{background:var(--fill2);color:var(--fg)}
@@ -344,6 +348,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
   .week7:not(.list) .sess .sn{grid-column:2;grid-row:1;align-self:end;margin:0}
   .week7:not(.list) .sess .smeta{grid-column:2;grid-row:2;align-self:start}
   .week7:not(.list) .sess .avs,.week7:not(.list) .sess .keep{grid-column:3;grid-row:1;justify-self:end;margin:0}
+  .week7:not(.list) .sess .invbtns{grid-column:3;grid-row:2;justify-self:end;margin:0}
   .week7:not(.list) .sess .ss,.week7:not(.list) .sess .pl{grid-column:3;justify-self:end}
 }
 @media (prefers-reduced-motion:no-preference){ .sess,.slot,.cell,.btn,.rail button,.whobtn,.seg button,.alt,.dayadd{transition:border-color .15s,background-color .15s,color .15s} }
@@ -696,6 +701,9 @@ function isPinned(s){return s.cat&&(week().pins||{})[s.cat]===s.id}
 function sessionCard(c,r,opts){
   /* Plus rien à faire : toutes celles qui viennent ont réservé, ou moi dans ma vue. */
   const bk0=(week().booked||{})[r.s.id]||{},att0=r.w.filter(x=>x.ok),settled=(att0.length>0&&att0.every(x=>bk0[x.p]))||!!(opts.me&&bk0[opts.me]);const s=r.s,bk=(week().booked||{})[s.id]||null,done=opts.booked&&isDone(ui.week,s);
+  if(r.invite)return `<div class="sess inv c-${c}"><span class="sc">${esc(pname(r.invite))} t’invite</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
+    <span class="smeta">${esc(CLUBS[s.club])}</span>${avs(r.w,(week().booked||{})[s.id]||null)}
+    <span class="invbtns"><button class="btn sm" data-act="invyes" data-id="${s.id}" data-p="${opts.me}">J’y vais</button><button class="btn ghost sm" data-act="invno" data-id="${s.id}" data-p="${opts.me}">Non merci</button></span></div>`;
   if(r.option)return `<button class="sess opt c-${c}" data-act="setplan" data-cat="${c}" data-id="${s.id}" aria-label="Ajouter ${esc(s.course)} ${DAYS[s.day].toLowerCase()} ${hhmm(s.time)}">
     <span class="sc">${CATLBL[c]}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta ${s.club==='inconnu'?'warn':''}">${esc(CLUBS[s.club])}</span>${avs(r.w)}<span class="keep">+ Ajouter</span></button>`;
@@ -712,7 +720,7 @@ function strip(pick,opts){const byDay={},add=(d,c,r)=>(byDay[d]=byDay[d]||[]).pu
   const sugDays=[];
   CATS.forEach(([c])=>{const r=pick[c];if(!r)return;
     if(me&&opts.booked&&!mine(r.w)){
-      if(!(so[me]&&so[me][c])){const a=soloFor(me,c,pick,sugDays);  /* ma proposition à la place du cours du groupe */
+      if(!(so[me]&&so[me][c])&&!r.w.some(x=>x.p===me&&x.inv==='ask')){const a=soloFor(me,c,pick,sugDays);  /* ma proposition à la place du cours du groupe */
         if(a){sugDays.push(a.day);add(a.day,c,{s:a,w:soloList().filter(o=>o.s.id===a.id&&o.p!==me).map(o=>({p:o.p,ok:true,a:1,pr:1})),n:1,suggest:true,also:a.withs||[]})}}
       return}
     add(r.s.day,c,r)});
@@ -720,6 +728,7 @@ function strip(pick,opts){const byDay={},add=(d,c,r)=>(byDay[d]=byDay[d]||[]).pu
   const grp={};((opts&&opts.solos)||[]).forEach(o=>{const k=o.c+'|'+o.s.id;(grp[k]=grp[k]||{c:o.c,s:o.s,ps:[]}).ps.push(o.p)});
   Object.values(grp).forEach(g=>{if(me&&!g.ps.includes(me))return;
     add(g.s.day,g.c,{s:g.s,w:PEOPLE.map(p=>({p,a:1,pr:1,ok:g.ps.includes(p),solo:true})),n:g.ps.length,label:g.ps.map(pname).join(' + ')+' · '+CATLBL[g.c]})});
+  ((opts&&opts.invs)||[]).forEach(o=>add(o.s.day,o.s.cat||'x',{s:o.s,w:o.s.gym?gymWho(o.s):who(o.s),n:0,invite:o.from}));
   ((opts&&opts.options)||[]).forEach(o=>add(o.r.s.day,o.c,Object.assign({},o.r,{option:true})));
   opts=Object.assign({pick},opts||{});
   const canAdd=!!opts.booked;
@@ -770,8 +779,6 @@ function armBtn(key,label,dis){const on=ui.arm===key;
 function renderSemaine(){
   const st=planState(),{plans,by}=recommend(st.lock,ui.me),wk=week(),gyms=gymList();
   let h=Store.ready?confirmBanner():'';
-  const inv=ui.me?inviteRows(ui.me):'';
-  if(inv)h+=`<div class="rbs invite">${inv}</div>`;
   const td=todoRows(st.pick);
   if(td)h+=`<section class="blk"><div class="hd"><h2>À faire</h2></div><div class="rbs">${td}</div></section>`;
   const rb=rebookRows(shiftWeek(ui.week,-1));
@@ -786,7 +793,7 @@ function renderSemaine(){
       ${st.miss.length?`<button class="btn ghost sm" data-act="toggleopts">${hide?'Afficher les options':'Masquer les options'}</button>`:''}
       <button class="btn ghost sm" data-act="gymadd">Ajouter une séance de salle</button></div>
     ${(f=>f?`<div class="rbs fix">${f}</div>`:'')(fixRows(st.pick))}
-    ${strip(st.pick,{booked:true,gyms,solos:soloList(),me:ui.me,options})}
+    ${strip(st.pick,{booked:true,gyms,solos:soloList(),me:ui.me,options,invs:ui.me?invitesFor(ui.me):[]})}
     ${Object.keys(wk.go||{}).length?`<span class="legend"><span>${av('p1','bk','')}Réservé</span><span>${av('p1','on','')}Vient</span><span>${av('p1','ask','')}Invitée</span><span>${av('p1','no','')}A décliné</span><span>${av('p1','free','')}Dispo</span><span>${av('p1','off','')}Pas dispo</span></span>`:''}
     ${st.miss.length&&!hide?`<p class="none">${options.length?'En pointillés : les options pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ').replace(/, ([^,]*)$/,' et $1')+'. Un clic ajoute le cours ; un jour vide permet d’en choisir un autre.':'Aucune option trouvée pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ')+' : élargissez vos dispos ou cliquez sur un jour vide.'}</p>`:''}</section>`;
   const off=offPlanRows();
