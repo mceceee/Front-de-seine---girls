@@ -795,8 +795,8 @@ function renderSemaine(){
       <button class="btn ghost sm" data-act="gymadd">Ajouter une séance de salle</button></div>
     ${(f=>f?`<div class="rbs fix">${f}</div>`:'')(fixRows(st.pick))}
     ${strip(st.pick,{booked:true,gyms,solos:soloList(),me:ui.me,options,invs:ui.me?invitesFor(ui.me):[]})}
-    ${Object.keys(wk.go||{}).length?`<span class="legend"><span>${av('p1','bk','')}Réservé</span><span>${av('p1','on','')}Vient</span><span>${av('p1','ask','')}Invitée</span><span>${av('p1','no','')}A décliné</span><span>${av('p1','free','')}Dispo</span><span>${av('p1','off','')}Pas dispo</span></span>`:''}
-    ${st.miss.length&&!hide?`<p class="none">${options.length?'En pointillés : les options pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ').replace(/, ([^,]*)$/,' et $1')+'. Un clic ajoute le cours ; un jour vide permet d’en choisir un autre.':'Aucune option trouvée pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ')+' : élargissez vos dispos ou cliquez sur un jour vide.'}</p>`:''}</section>`;
+    <span class="legend"><span>${av('p1','bk','')}Réservé</span><span>${av('p1','on','')}Vient</span><span>${av('p1','ask','')}Invitée</span><span>${av('p1','no','')}A décliné</span><span>${av('p1','free','')}Dispo</span><span>${av('p1','off','')}Pas dispo</span></span>
+    <p class="none">${hide?'Options masquées.':st.miss.length&&!options.length?'Aucune option trouvée pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ')+' : élargissez vos dispos ou cliquez sur un jour vide.':'En pointillés : les options'+(st.miss.length?' pour '+st.miss.map(([c,l])=>l.toLowerCase()).join(', ').replace(/, ([^,]*)$/,' et $1'):'')+'. Un clic ajoute le cours ; un jour vide permet d’en choisir un autre.'}</p></section>`;
   const off=offPlanRows();
   if(off)h+=`<section class="blk"><div class="hd"><h2>Réservations de sécurité</h2><span class="sub">Hors plan : à garder ou à annuler dans l’appli</span></div><div class="alts">${off}</div></section>`;
   return h}
