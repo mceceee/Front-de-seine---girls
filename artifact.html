@@ -173,6 +173,10 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .tag.outline{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.8)}
 .tag[style*="#2b2f63"]{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
 .filters2{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fsel{-webkit-appearance:none;appearance:none;border:1px solid rgba(255,255,255,.3);background:transparent;color:var(--fg);border-radius:999px;font-size:13px;font-weight:600;padding:7px 32px 7px 14px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:12px}
+.fsel:hover{background-color:rgba(255,255,255,.1);border-color:rgba(255,255,255,.5)}
 .ficon{display:inline-flex;color:var(--t3)}
 .ficon svg{width:18px;height:18px}
 .alts,.rbs{display:flex;flex-direction:column;background:var(--fill);border-radius:18px;overflow:hidden}
@@ -778,15 +782,16 @@ function altRow(a,cat,rm){return `<button class="alt" data-act="setplan" data-ca
 const FILTER_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-6.2 7.4V19l-3.6-1.8v-4.8z"/></svg>';
 const PARTS=[['all','Tout'],['am','Matin'],['pm','Aprem'],['eve','Soirée']];
 const inPart=(min,p)=>p==='am'?min<720:p==='pm'?min>=720&&min<1020:p==='eve'?min>=1020:true;
-function replaceLists(cat,sl){const f=ui.rf||{},part=f.part||'all',fc=f.cat||cat;
+function replaceLists(cat,sl){const f=ui.rf||{},part=f.part||'all',fc=f.cat||cat,fl=f.club||'all';
   const byTime=(a,b)=>a.s.day-b.s.day||a.s.min-b.s.min||(a.s.club<b.s.club?-1:1),by=recommend().by;
-  const same=by[fc].filter(a=>a.s.id!==sl.id&&a.s.day===sl.day&&!shortOf(a.s,a.w)&&inPart(a.s.min,part)).sort(byTime);
+  const same=by[fc].filter(a=>a.s.id!==sl.id&&a.s.day===sl.day&&!shortOf(a.s,a.w)&&inPart(a.s.min,part)&&(fl==='all'||a.s.club===fl)).sort(byTime);
   const other=fc===cat?by[cat].filter(a=>a.s.id!==sl.id&&a.s.course===sl.course&&a.s.day!==sl.day&&!dayTaken(cat,a.s.day)&&!shortOf(a.s,a.w)).sort(byTime):[];
   return `<div class="lbl">Remplacer par, le même jour</div>
-    <div class="filters2"><span class="ficon" title="Filtres">${FILTER_ICON}</span>
-      <span class="seg sm" role="group" aria-label="Moment de la journée">${PARTS.map(([k,l])=>`<button data-act="rfpart" data-v="${k}" aria-pressed="${part===k}">${l}</button>`).join('')}</span>
-      <span class="seg sm" role="group" aria-label="Catégorie">${CATS.map(([k,l])=>`<button data-act="rfcat" data-v="${k}" aria-pressed="${fc===k}">${l}</button>`).join('')}</span></div>
-    ${same.length?`<div class="alts">${same.map(a=>altRow(a,fc,cat)).join('')}</div>`:`<p class="none">Aucun cours ${CATLBL[fc]}${part==='all'?'':' '+({am:'le matin',pm:'l’après-midi',eve:'en soirée'})[part]} ce jour-là.</p>`}
+    <div class="filters2">
+      <select class="fsel" id="rfPart" data-act="rfpart" aria-label="Heure">${[['all','Heure'],['am','Matin'],['pm','Après-midi'],['eve','Soirée']].map(([k,l])=>`<option value="${k}" ${part===k?'selected':''}>${l}</option>`).join('')}</select>
+      <select class="fsel" id="rfCat" data-act="rfcat" aria-label="Catégorie">${CATS.map(([k,l])=>`<option value="${k}" ${fc===k?'selected':''}>${l}</option>`).join('')}</select>
+      <select class="fsel" id="rfClub" data-act="rfclub" aria-label="Lieu">${[['all','Lieu'],['auteuil','Auteuil'],['beaugrenelle','Beaugrenelle']].map(([k,l])=>`<option value="${k}" ${fl===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    ${same.length?`<div class="alts">${same.map(a=>altRow(a,fc,cat)).join('')}</div>`:`<p class="none">Aucun cours ${CATLBL[fc]}${part==='all'?'':' '+({am:'le matin',pm:'l’après-midi',eve:'en soirée'})[part]}${fl==='all'?'':' à '+CLUBS[fl]} ce jour-là.</p>`}
     ${fc!==cat?`<p class="none">Choisir un cours ${CATLBL[fc]} remplace cette séance ${CATLBL[cat]}${(week().plan||{})[fc]?' et votre cours '+CATLBL[fc]+' actuel':''}.</p>`:''}
     ${other.length?`<div class="lbl">${esc(sl.course)} un autre jour</div><div class="alts">${other.map(a=>altRow(a,cat)).join('')}</div>`:''}`}
 function altList(cat,cur,n){const alts=bestAlts(cat,cur,n);
@@ -1049,8 +1054,6 @@ document.addEventListener('click',e=>{
   else if(a==='places'){save(weekPath(),{places:{[el.dataset.id]:v===''?null:+v}})}
   else if(a==='book'){const cur=((week().booked||{})[el.dataset.id]||{})[el.dataset.p];save(weekPath(),{booked:{[el.dataset.id]:{[el.dataset.p]:cur?null:true}}})}
   else if(a==='choose'){const pl=recommend(planState().lock,ui.me).plans[+el.dataset.i];if(pl){const plan={},by={},old=week().plan||{};CATS.forEach(([c])=>{plan[c]=pl.pick[c].s.id;if(old[c]!==plan[c])by[c]=ui.me||null});save(weekPath(),{plan,by});ui.showAll=false;toast('Plan retenu.')}}
-  else if(a==='rfpart'){ui.rf=Object.assign({},ui.rf,{part:v});renderDlg();return}
-  else if(a==='rfcat'){ui.rf=Object.assign({},ui.rf,{cat:v});renderDlg();return}
   else if(a==='setplan'&&(()=>{const c=el.dataset.cat,rm=el.dataset.rm,d=slotById(el.dataset.id).day,p=week().plan||{};
       return CATS.some(([k])=>k!==c&&k!==rm&&p[k]&&slotById(p[k])&&slotById(p[k]).day===d)})()){toast('Vous avez déjà un cours ce jour-là : un seul cours par jour.');return}
   else if(a==='setplan'){const c=el.dataset.cat,rm=el.dataset.rm,patch={plan:{[c]:el.dataset.id},by:{[c]:ui.me||null}};
@@ -1092,6 +1095,7 @@ document.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;co
   lpDone=false;clearTimeout(lpT);lpT=setTimeout(()=>{lpDone=true;pickFrom(p)},550)});
 ['pointerup','pointercancel','pointermove'].forEach(t=>document.addEventListener(t,e=>{if(t!=='pointermove'||Math.abs(e.movementX)+Math.abs(e.movementY)>6)clearTimeout(lpT)}));
 document.addEventListener('change',e=>{const el=e.target;const a=el.dataset&&el.dataset.act;
+  if(a==='rfpart'||a==='rfcat'||a==='rfclub'){ui.rf=Object.assign({},ui.rf,{[a==='rfpart'?'part':a==='rfcat'?'cat':'club']:el.value});renderDlg();return}
   if(a==='mode'&&el.dataset.t==='1'){if(dlgType){const d=+el.dataset.d,k=el.value;dlgType.a=dlgType.a.slice(0,d*NB)+PRESET[k]+dlgType.a.slice((d+1)*NB);dlgType.m=dlgType.m.slice(0,d)+k+dlgType.m.slice(d+1);renderDlg()}}
   else if(a==='mode'){const p=ui.edit,av=availOf(p),d=+el.dataset.d,k=el.value;
     saveAvail(p,av.a.slice(0,d*NB)+PRESET[k]+av.a.slice((d+1)*NB),av.m.slice(0,d)+k+av.m.slice(d+1),false);render()}
