@@ -438,7 +438,7 @@ function renderSemaine(){
   const st=planState(),{plans,by}=recommend(st.lock,ui.me),wk=week(),gyms=gymList();
   let h=Store.ready?confirmBanner():'';
   const td=todoRows(st.pick);
-  if(td)h+=`<section class="blk"><div class="hd"><h2>À faire</h2></div><div class="rbs">${td}</div></section>`;
+  if(td)h+=`<section class="blk"><div class="hd"><h2>À faire</h2></div><div class="rbs ${/class="rb"/.test(td)?'todo':''}">${td}</div></section>`;
   const rb=rebookRows(shiftWeek(ui.week,-1));
   if(rb)h+=`<section class="blk"><div class="hd"><h2>Réinscrites pour cette semaine ?</h2></div><div class="rbs">${rb}</div></section>`;
   /* Les options pour les catégories qui manquent, posées en pointillés sur leur jour. */

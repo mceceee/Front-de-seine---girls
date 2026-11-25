@@ -179,6 +179,14 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .rail button{position:relative}
 .rail .notif{position:absolute;top:8px;right:14px;min-width:9px;width:9px;height:9px;padding:0}
 .rbs.todo{background:rgba(255,201,107,.12);box-shadow:inset 0 0 0 1px rgba(255,201,107,.55)}
+.rbs.todo .rb{justify-content:flex-start;gap:8px 12px;padding:14px 16px}
+.rbs.todo .rb::before{content:'';flex:none;width:10px;height:10px;border-radius:50%;background:#ffc96b;box-shadow:0 0 0 4px rgba(255,201,107,.22)}
+.rbs.todo .rb.soon::before{background:none;box-shadow:inset 0 0 0 1.5px var(--t3)}
+.rbs.todo .rb>.aw{flex:1 1 220px;font-size:16px;color:var(--fg);gap:2px 12px}
+.rbs.todo .rb>.aw .lbl{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#ffc96b}
+.rbs.todo .rb.soon>.aw .lbl{color:var(--t3)}
+.rbs.todo .rb>.rbp{margin-left:auto}
+.rbs.todo .rb+.rb{border-top-color:rgba(255,201,107,.25)}
 .rbs.fix{background:rgba(255,107,107,.14);box-shadow:inset 0 0 0 1px rgba(255,107,107,.55)}
 .sc{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--cc)}
 .st{font-size:23px;font-weight:700;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
@@ -827,7 +835,7 @@ function renderSemaine(){
   const st=planState(),{plans,by}=recommend(st.lock,ui.me),wk=week(),gyms=gymList();
   let h=Store.ready?confirmBanner():'';
   const td=todoRows(st.pick);
-  if(td)h+=`<section class="blk"><div class="hd"><h2>À faire</h2></div><div class="rbs">${td}</div></section>`;
+  if(td)h+=`<section class="blk"><div class="hd"><h2>À faire</h2></div><div class="rbs ${/class="rb"/.test(td)?'todo':''}">${td}</div></section>`;
   const rb=rebookRows(shiftWeek(ui.week,-1));
   if(rb)h+=`<section class="blk"><div class="hd"><h2>Réinscrites pour cette semaine ?</h2></div><div class="rbs">${rb}</div></section>`;
   /* Les options pour les catégories qui manquent, posées en pointillés sur leur jour. */
