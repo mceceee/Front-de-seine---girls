@@ -854,16 +854,22 @@ function renderDlg(){
   const s=slotById(dlgSlot);if(!s){closeDlg();return}
   const w=s.gym?gymWho(s):who(s),plan=week().plan||{},inPlan=s.cat&&plan[s.cat]===s.id,booked=(week().booked||{})[s.id]||{},b=booking(s),anyBk=PEOPLE.some(p=>booked[p]),isGym=!!s.gym,inv=((week().invites||{})[s.id]||{}).to||{},solos=soloList().filter(o=>o.s.id===s.id),pk=planState().pick,forMe=!!(ui.me&&s.cat&&!inPlan&&pk[s.cat]&&!pk[s.cat].w.some(x=>x.p===ui.me&&x.ok)&&((week().solo||{})[ui.me]||{})[s.cat]!==s.id&&w.some(x=>x.p===ui.me&&x.ok)),done=inPlan&&isDone(ui.week,s),seen=isDone(shiftWeek(ui.week,-1),s);
   /* On peut inviter quelqu'un d'autre que soi, tant qu'elle n'est pas déjà de la partie. */
+  const past=isDone(ui.week,s),nextK=shiftWeek(ui.week,1),nextW=week(nextK);
+  /* celles qui étaient de la séance */
+  const was=x=>isGym?x.ok:!!(booked[x.p]||(inPlan&&x.ok)||solos.some(o=>o.p===x.p));
   const canInvite=x=>ui.me&&x.p!==ui.me&&b.st!=='past'&&(isGym?!x.ok:!(booked[x.p]||(inPlan&&x.ok)||solos.some(o=>o.p===x.p)));
   box.innerHTML=`<div class="dlg c-${s.cat||'x'}">
     <div class="dh2"><div><span class="sc">${CATLBL[s.cat]||(isGym?'Salle':'')}</span><h3>${esc(whenTxt(s))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
     <p class="meta">${courseTag(s.course)} ${isGym?'':`<b class="club">${CLUBS[s.club]}</b> · `}${esc(s.coach)}${s.dur?' · '+s.dur+' min':''}${s.max?' · '+s.max+' places':''}</p>
+    ${past?`<div class="lbl">Cours passé · réinscrite pour la semaine suivante ?</div>`:''}
     <div class="people">${w.map(x=>`<div class="prow2">${av(x.p,x.ok?'on':'off')}<span class="pn">${esc(pname(x.p))}</span>
       <span class="ps">${isGym?(x.ok?'vient':'ne vient pas'):solos.length&&!solos.some(o=>o.p===x.p)?'':x.out?'a laissé sa place':x.pr===0?'ne veut pas ce cours':x.a===0?'pas dispo':x.a===2?'créneau idéal':'possible'}${x.pr===2&&x.ok?' · adore':''}</span>
+      ${past?(was(x)?(()=>{const y=!!(((nextW.booked||{})[s.id]||{})[x.p]),n=!!(((nextW.rebookNo||{})[s.id]||{})[x.p]);
+        return `<span class="seg sm" role="group" aria-label="${esc(pname(x.p))} réinscrite"><button data-act="rebook" data-w="${nextK}" data-id="${s.id}" data-p="${x.p}" data-v="1" aria-pressed="${y}">Oui</button><button data-act="rebook" data-w="${nextK}" data-id="${s.id}" data-p="${x.p}" data-v="0" aria-pressed="${n}">Non</button></span>`})():''):`
       ${x.out?`<button class="btn sm ghost" data-act="in" data-id="${s.id}" data-p="${x.p}">Remettre</button>`:''}
       ${isGym&&(!ui.me||x.p===ui.me)?`<button class="btn sm ghost" data-act="gymwho" data-id="${s.id}" data-p="${x.p}">${x.ok?'Retirer':'Ajouter'}</button>`:''}
       ${canInvite(x)?`<button class="btn sm ${inv[x.p]==='ask'?'':'ghost'}" data-act="invite" data-id="${s.id}" data-p="${x.p}">${inv[x.p]==='ask'?'Invitée · annuler':inv[x.p]==='no'?'A dit non · réinviter':'Inviter'}</button>`:''}
-      ${(isGym?x.ok:booked[x.p]||(inPlan&&x.ok)||solos.some(o=>o.p===x.p))&&(!ui.me||x.p===ui.me||booked[x.p])?`<button class="btn sm ${booked[x.p]?'done':'ghost'}" ${ui.me&&x.p!==ui.me?'disabled':''} data-act="book" data-id="${s.id}" data-p="${x.p}" aria-pressed="${!!booked[x.p]}">${booked[x.p]?'Réservé ✓':'Réservé ?'}</button>`:''}</div>`).join('')}</div>
+      ${(isGym?x.ok:booked[x.p]||(inPlan&&x.ok)||solos.some(o=>o.p===x.p))&&(!ui.me||x.p===ui.me||booked[x.p])?`<button class="btn sm ${booked[x.p]?'done':'ghost'}" ${ui.me&&x.p!==ui.me?'disabled':''} data-act="book" data-id="${s.id}" data-p="${x.p}" aria-pressed="${!!booked[x.p]}">${booked[x.p]?'Réservé ✓':'Réservé ?'}</button>`:''}`}</div>`).join('')}</div>
     ${inPlan&&!done?w.filter(x=>!x.ok&&(!ui.me||x.p===ui.me)).map(x=>{const cur=((week().solo||{})[x.p]||{})[s.cat],cs=cur&&slotById(cur),opts2=soloOptions(x.p,s.cat,pk,4).filter(o=>!cs||o.id!==cs.id);
       const row=(o,kept)=>`<div class="alt"><span class="aw"><b>${DAYS[o.day].slice(0,3)}. ${hhmm(o.time)}</b>${courseTag(o.course)}${clubNote(o)?'<span class="lbl">'+clubNote(o)+'</span>':''}${(n=>n.length?'<span class="lbl">avec '+esc(n.map(q=>pname(q.p)).join(' et '))+'</span>':o.withs&&o.withs.length?'<span class="lbl">proposé aussi à '+esc(o.withs.map(pname).join(' et '))+'</span>':'')(soloList().filter(q=>q.s.id===o.id&&q.p!==x.p))}</span>
         <span class="rbp">${avs(who(slotById(o.id)))}<button class="btn sm ${kept?'ghost':''}" data-act="${kept?'unsolo':'solo'}" data-p="${x.p}" data-cat="${s.cat}" data-id="${o.id}">${kept?'Retirer':'Retenir'}</button></span></div>`;
@@ -874,7 +880,6 @@ function renderDlg(){
     ${solos.map(o=>`<button class="btn ghost sm" data-act="unsolo" data-p="${o.p}" data-cat="${o.c}">Retirer le créneau de ${esc(pname(o.p))}</button>`).join('')}
     <div class="row between" ${isGym?'hidden':''}><span class="lbl">${b.st==='past'?'Cours passé':seen?'Places restantes vues dans l’appli':'Places visibles une fois le cours de la semaine d’avant terminé'}</span>${seen&&b.st!=='past'?placesCtl(s):''}</div>
     ${b.st==='soon'&&!isGym?`<div class="lbl">Inscriptions dès ${b.dOpen===1?'demain':esc(b.lbl)}</div>`:''}
-    ${done?`<div class="lbl">Réinscrites pour la semaine suivante ?</div><div class="rbs">${rebookRows(ui.week).split('<div class="rb">').filter(x=>x.includes('data-id="'+s.id+'"')).map(x=>'<div class="rb">'+x).join('')}</div>`:''}
     ${inPlan&&!done?`<div class="lbl">Remplacer par</div>${altList(s.cat,s.id,4)}<button class="btn ghost sm" data-act="unplan" data-v="${s.cat}">Retirer de notre semaine</button>`:''}
     ${!inPlan&&s.cat&&!isGym&&!solos.length&&b.st!=='past'?(alts=>alts.length?`<div class="lbl">Autres cours ${CATLBL[s.cat]} à la même heure</div><div class="alts">${alts.map(x=>`<button class="alt" data-act="slot" data-id="${x.s.id}"><span class="aw"><b>${DAYS[x.s.day].slice(0,3)}. ${hhmm(x.s.time)}</b>${courseTag(x.s.course)}${clubNote(x.s)?'<span class="lbl">'+clubNote(x.s)+'</span>':''}</span>${avs(x.w)}</button>`).join('')}</div>`:'')(candidates().filter(x=>x.cat===s.cat&&x.day===s.day&&x.band===s.band&&x.id!==s.id).map(x=>({s:x,w:who(x)}))):''}
     ${isPinned(s)?`<button class="btn ghost sm" data-act="unpin" data-v="${s.cat}">Ne plus imposer ce cours</button>`:''}
@@ -954,7 +959,9 @@ document.addEventListener('click',e=>{
   else if(a==='pickcat'){dlgCat=v;dlgSlot=null;openDlg();return}
   else if(a==='unplan'){save(weekPath(),{plan:{[v]:null},pins:{[v]:null}});closeDlg()}
   else if(a==='rebook'){const d=el.dataset,yes=d.v==='1',on=el.getAttribute&&el.getAttribute('aria-pressed')==='true';
-    save(weekPath(d.w),{booked:{[d.id]:{[d.p]:yes&&!on?true:null}},rebookNo:{[d.id]:{[d.p]:!yes&&!on?true:null}}})}
+    const patch={booked:{[d.id]:{[d.p]:yes&&!on?true:null}},rebookNo:{[d.id]:{[d.p]:!yes&&!on?true:null}}};
+    if(d.id.startsWith('gym_'))patch.gym={[d.id.slice(4)]:{[d.p]:yes&&!on}};
+    save(weekPath(d.w),patch)}
   else if(a==='closedlg'){closeDlg();return}
   else if(a==='places'){save(weekPath(),{places:{[el.dataset.id]:v===''?null:+v}})}
   else if(a==='book'){const cur=((week().booked||{})[el.dataset.id]||{})[el.dataset.p];save(weekPath(),{booked:{[el.dataset.id]:{[el.dataset.p]:cur?null:true}}})}
