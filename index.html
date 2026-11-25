@@ -117,6 +117,11 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke
 /* Semaine sur 7 colonnes */
 .week7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:var(--fill);border-radius:24px;overflow:hidden}
 .week7.pickable .day:not(.past){cursor:pointer}
+@media (hover:hover){
+  .week7.pickable .day:not(.past){transition:background-color .15s}
+  .week7.pickable .day:not(.past):hover:not(:has(.sess:hover,.dayadd:hover)){background:rgba(255,255,255,.07)}
+  .week7.pickable .day.has:not(.past):hover:not(:has(.sess:hover)) .dh::after{content:'+';margin-left:auto;font-size:18px;font-weight:400;line-height:.7;color:var(--fg)}
+}
 .day{min-width:0;display:flex;flex-direction:column;gap:8px;padding:12px 8px 10px;border-left:1px solid var(--line)}
 .day:first-child{border-left:0}
 .sess[draggable]{cursor:grab}
