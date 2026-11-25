@@ -643,7 +643,7 @@ function renderDlg(){
 function openDlg(){renderDlg();const d=document.getElementById('dlg');if(!d.open)d.showModal()}
 function closeDlg(){dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null;const d=document.getElementById('dlg');if(d.open)d.close()}
 document.getElementById('dlg').addEventListener('close',()=>{dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null});
-document.getElementById('dlg').addEventListener('click',e=>{if(e.target&&e.target.id==='dlg')closeDlg()});
+document.getElementById('dlg').addEventListener('click',e=>{if(e.target&&e.target.id==='dlg'&&!ui.rfOpen)closeDlg()});
 
 let toastT;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},3800)}
 function save(path,patch){if(!Store.write(path,patch))toast(Store.readonly?'Lecture seule : rien n’a été modifié.':'Encore un instant, les données se chargent.')}
@@ -651,8 +651,12 @@ function saveAvail(p,a,m,type){
   if(!type)save(weekPath(),{avail:{[p]:{a,m}}});
   else save('profiles/'+p,{avail:a,modes:m})}
 
+/* La liste d'un filtre est-elle inchangée par rapport à ce qui est appliqué ? */
+function rfUnchanged(){const sl=slotById(dlgSlot);if(!sl||!ui.rfOpen)return true;const cur=rfState(sl.cat)[ui.rfOpen],d=ui.rfDraft||[];return cur.length===d.length&&cur.every(x=>d.includes(x))}
 document.addEventListener('click',e=>{
   if(lpDone){lpDone=false;return}
+  /* Liste de filtre ouverte : un clic en dehors la referme si rien n'a été modifié. */
+  if(ui.rfOpen&&e.target.closest&&!e.target.closest('.fpanel')&&!e.target.closest('.fpill')){if(rfUnchanged()){ui.rfOpen=null;renderDlg()}return}
   {const b=e.target.closest('[data-act="arm"]');
     if(b&&b.dataset.act==='arm'){const k=b.dataset.v;
       if(k==='type'){ui.menu=false;ui.arm=null;{const p=resetWho(),t=typeAvail(p);dlgType={p,a:t.a,m:t.m}}dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;renderTop();openDlg();return}
