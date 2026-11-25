@@ -106,6 +106,11 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke
 .week7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:var(--fill);border-radius:24px;overflow:hidden}
 .day{min-width:0;display:flex;flex-direction:column;gap:8px;padding:12px 8px 10px;border-left:1px solid var(--line)}
 .day:first-child{border-left:0}
+.sess[draggable]{cursor:grab}
+.sess[draggable]:active{cursor:grabbing}
+body.dragging .week7.pickable{box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+body.dragging .week7.pickable .day.drop{background:rgba(255,255,255,.14)}
+body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6);color:var(--fg)}
 .dayadd{flex:1;min-height:132px;width:100%;border:1.5px dashed transparent;border-radius:16px;background:none;color:transparent;font-size:28px;font-weight:300;line-height:1;display:flex;align-items:center;justify-content:center}
 .dayadd:hover,.dayadd:focus-visible{border-color:rgba(255,255,255,.38);background:rgba(255,255,255,.07);color:var(--fg)}
 .dayadd:active{background:rgba(255,255,255,.13)}
@@ -636,7 +641,7 @@ function sessionCard(c,r,opts){const s=r.s,bk=(week().booked||{})[s.id]||null,do
     <span class="sc">${CATLBL[c]}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta">${esc(s.coach.split(' · ')[0])}${s.dur?' · '+s.dur+' min':''}${clubNote(s)?' · '+clubNote(s):''}</span>
     <span class="keep">Retenir</span><span class="ss">${r.w.length?'Avec '+esc(r.w.map(x=>pname(x.p)).join(' et ')):r.also&&r.also.length?'Proposé aussi à '+esc(r.also.map(pname).join(' et ')):'Proposé à la place du cours du groupe'}</span></button>`;
-  return `<button class="sess c-${c} ${opts.booked&&!r.away&&shortOf(s,r.w)?'pb':''} ${r.away?'away':''}" data-act="slot" data-id="${s.id}">
+  return `<button class="sess c-${c} ${opts.booked&&!r.away&&shortOf(s,r.w)?'pb':''} ${r.away?'away':''}" ${!opts.booked&&CATLBL[c]?'draggable="true"':''} data-act="slot" data-id="${s.id}">
     <span class="sc">${esc(r.label||CATLBL[c]||'Salle')}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta">${esc(s.coach.split(' · ')[0])}${s.dur?' · '+s.dur+' min':''}</span>
     ${avs(r.w,bk)}${done?(rebookPending(ui.week,s,r.w.filter(x=>x.ok).map(x=>x.p))?`<span class="ss warn">${ui.me?'Réinscrite ?':'Réinscrites ?'}</span>`:''):bookShort(s)}${placesTxt(s,r.w)}${clubNote(s)&&!s.gym?'<span class="ss '+(s.club==='inconnu'?'warn':'')+'">'+(s.club==='inconnu'?clubNote(s):'À Beaugrenelle')+'</span>':''}${opts.booked&&CATLBL[c]&&!r.label&&r.w.some(x=>x.own&&x.ok)&&r.w.filter(x=>x.ok).length===1?`<span class="ss warn">${opts.me&&r.w.some(x=>x.own&&x.p===opts.me)?'Tu es seule pour l’instant':esc(pname(r.w.find(x=>x.own).p))+' est seule pour l’instant'}</span>`:''}${isPinned(s)?'<span class="ss">Cours choisi</span>':''}${r.away?'<span class="ss">Sans toi</span>':''}</button>`}
@@ -1005,6 +1010,18 @@ document.addEventListener('click',e=>{
   else if(a==='pref'){const p=ui.edit;save(weekPath(),{prefs:{[p]:{[el.dataset.c]:+v===1?null:+v}}})}
   else return;
   render()});
+/* Glisser une séance des propositions vers « Notre semaine » pour l'ajouter (ordinateur). */
+let dragId=null;
+function dragMark(on){try{document.body.classList.toggle('dragging',on);document.querySelectorAll('.day.drop').forEach(x=>x.classList.remove('drop'));
+  if(on){const sl=slotById(dragId),t=sl&&document.querySelector('.week7.pickable .day[data-d="'+sl.day+'"]');if(t)t.classList.add('drop')}}catch(e){}}
+document.addEventListener('dragstart',e=>{const el=e.target.closest&&e.target.closest('.sess[draggable]');if(!el)return;dragId=el.dataset.id;
+  try{e.dataTransfer.setData('text/plain',dragId);e.dataTransfer.effectAllowed='copy'}catch(x){}dragMark(true)});
+document.addEventListener('dragover',e=>{if(dragId&&e.target.closest&&e.target.closest('.week7.pickable')){e.preventDefault();try{e.dataTransfer.dropEffect='copy'}catch(x){}}});
+document.addEventListener('drop',e=>{if(!dragId||!(e.target.closest&&e.target.closest('.week7.pickable')))return;e.preventDefault();
+  const sl=slotById(dragId);dragMark(false);dragId=null;if(!sl||!sl.cat)return;
+  if(dayTaken(sl.cat,sl.day)){toast('Vous avez déjà un cours ce jour-là : un seul cours par jour.');return}
+  save(weekPath(),{plan:{[sl.cat]:sl.id},by:{[sl.cat]:ui.me||null}});toast(sl.course+' de '+DAYS[sl.day].toLowerCase()+' ajouté à votre semaine.');render()});
+document.addEventListener('dragend',()=>{dragMark(false);dragId=null});
 /* Clic droit (ordinateur) ou appui long (téléphone) sur une case : choisir un cours précis à cette heure. */
 let lpT=null,lpDone=false;
 /* Heures où il existe au moins un cours ce jour-là (tous clubs). */
