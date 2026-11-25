@@ -529,6 +529,7 @@ const IDEAS=[
 function renderIdees(){return `<section class="blk"><div class="hd"><h2>Idées pour s’organiser</h2></div><ol class="ideas">${IDEAS.map(([t,d])=>`<li><b>${t}</b><span>${d}</span></li>`).join('')}</ol></section>`}
 
 function render(){
+  try{document.body.dataset.tab=ui.tab}catch(e){}
   renderTop();
   const keep=document.activeElement&&document.activeElement.id;
   const sel=keep==='nameInput'?[document.activeElement.selectionStart,document.activeElement.selectionEnd,document.activeElement.value]:null;
