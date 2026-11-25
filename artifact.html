@@ -119,8 +119,8 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke
 .week7.pickable .day:not(.past){cursor:pointer}
 @media (hover:hover){
   .week7.pickable .day:not(.past){transition:background-color .15s}
-  .week7.pickable .day:not(.past):hover:not(:has(.sess:hover,.dayadd:hover)){background:rgba(255,255,255,.07)}
-  .week7.pickable .day.has:not(.past):hover:not(:has(.sess:hover)) .dh::after{content:'+';margin-left:auto;font-size:18px;font-weight:400;line-height:.7;color:var(--fg)}
+  .week7.pickable .day:not(.past):hover:not(:has(.sess:hover)){background:rgba(255,255,255,.07)}
+  .week7.pickable .day:not(.past):hover:not(:has(.sess:hover)) .dh::after{content:'+';margin-left:auto;font-size:18px;font-weight:400;line-height:.7;color:var(--fg)}
 }
 .day{min-width:0;display:flex;flex-direction:column;gap:8px;padding:12px 8px 10px;border-left:1px solid var(--line)}
 .day:first-child{border-left:0}
@@ -130,8 +130,8 @@ body.dragging .week7.pickable{box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
 body.dragging .week7.pickable .day.drop{background:rgba(255,255,255,.14)}
 body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6);color:var(--fg)}
 .dayadd{flex:1;min-height:132px;width:100%;border:1.5px dashed transparent;border-radius:16px;background:none;color:transparent;font-size:28px;font-weight:300;line-height:1;display:flex;align-items:center;justify-content:center}
-.dayadd:hover,.dayadd:focus-visible{border-color:rgba(255,255,255,.38);background:rgba(255,255,255,.07);color:var(--fg)}
-.dayadd:active{background:rgba(255,255,255,.13)}
+.dayadd:focus-visible{border-color:rgba(255,255,255,.38);color:var(--fg)}
+
 .cards{display:flex;flex-direction:column;gap:8px;min-width:0;flex:1}
 .week7:not(.list) .cards>.sess{flex:0 0 auto;justify-content:flex-start}
 .week7:not(.list) .cards>.sess:only-child{flex:0 1 auto;min-height:min(100%,236px)}
