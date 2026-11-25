@@ -277,15 +277,15 @@ function renderTop(){
     `<button role="tab" data-act="tab" data-v="${k}" aria-selected="${ui.tab===k}">${ICON[k]}<span>${l}</span>${k==='semaine'&&ui.me&&invitesFor(ui.me).length?'<i class="notif"></i>':''}</button>`).join('');
   document.getElementById('top').innerHTML=`
     <div class="wk">
-      <button class="rnd" data-act="week" data-v="-1" aria-label="Semaine précédente">‹</button>
+      <button class="rnd" data-act="week" data-v="-1" aria-label="Semaine précédente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button>
       <div class="wkt"><span class="kicker">Front de Seine</span><h1>Semaine du ${esc(dayLabel(wk,0))}</h1></div>
-      <button class="rnd" data-act="week" data-v="1" aria-label="Semaine suivante">›</button>
+      <button class="rnd" data-act="week" data-v="1" aria-label="Semaine suivante"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg></button>
     </div>
     <div class="topr">
       <span class="me" role="group" aria-label="Je suis">${PEOPLE.map(p=>
         `<button class="whobtn" data-act="me" data-v="${p}" aria-pressed="${(ui.tab==='dispos'?ui.edit:ui.me)===p}">${av(p,'on')}<span>${esc(pname(p))}</span>${invitesFor(p).length?`<i class="notif" title="Un cours lui est proposé">${invitesFor(p).length}</i>`:''}</button>`).join('')}</span>
       ${st[0]==='live'||!Store.ready?'':`<span class="sync ${st[0]}"><i></i>${st[1]}</span>`}
-      ${(items=>items.length?`<span class="more"><button class="rnd" data-act="menu" aria-label="Autres actions" aria-expanded="${!!ui.menu}">⋯</button>${ui.menu?`<div class="menu" role="menu">
+      ${(items=>items.length?`<span class="more"><button class="rnd" data-act="menu" aria-label="Autres actions" aria-expanded="${!!ui.menu}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="18" cy="12" r="1.4" fill="currentColor"/></svg></button>${ui.menu?`<div class="menu" role="menu">
         ${items.map(([k,l])=>
           `<button class="menuitem ${ui.arm===k?'danger':''}" role="menuitem" data-act="arm" data-v="${k}" ${Store.ready&&!Store.readonly?'':'disabled'}>${ui.arm===k?'Confirmer : tout effacer':esc(l)}</button>`).join('')}</div>`:''}</span>`:'')(
         ui.tab==='semaine'?(Store.link?[['link','Copier le lien pour Coco et Clem']]:[]).concat([['week','Réinitialiser la semaine du '+dayLabel(wk,0)]]):ui.tab==='dispos'?[['type','Modifier la semaine type de '+pname(resetWho())],['mine','Réinitialiser les dispos de '+pname(resetWho())]]:[])}
@@ -563,16 +563,16 @@ function renderDlg(){
   const box=document.getElementById('dlg');
   box.classList&&box.classList.toggle('wide',!!dlgType);
   if(dlgAsk){const w=dlgAsk;
-    box.innerHTML=`<div class="dlg"><div class="dh2"><div><span class="lbl">Rappel pour Cece</span><h3>Planning de la semaine du ${esc(dayLabel(w,0))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
+    box.innerHTML=`<div class="dlg"><div class="dh2"><div><span class="lbl">Rappel pour Cece</span><h3>Planning de la semaine du ${esc(dayLabel(w,0))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
       <p class="meta">${WEEKDATA[w]?'Ce planning a été relevé en avance : renvoie la page à Claude pour vérifier que rien n’a changé.':'Envoie à Claude la page du club pour cette semaine, en HTML.'}</p>
       <ol class="steps"><li>Sur la page « Réserver » du club, affiche la semaine du ${esc(dayLabel(w,0)).replace(/\.$/,'')}.</li><li>Cmd+S, format « Page Web, HTML uniquement ».</li><li>Glisse le fichier dans la conversation avec Claude.</li></ol>
       <div class="row between"><button class="btn ghost" data-act="asklater" data-v="${w}">Plus tard</button><button class="btn" data-act="askdone" data-v="${w}">C’est envoyé</button></div></div>`;return}
   if(dlgType){const p=dlgType.p,cur=typeAvail(p),changed=cur.a!==dlgType.a||cur.m!==dlgType.m,ok=Store.ready&&!Store.readonly;
-    box.innerHTML=`<div class="dlg"><div class="dh2"><div><h3>Semaine type de ${esc(pname(p))}</h3><span class="lbl">Le point de départ de chaque nouvelle semaine</span></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
+    box.innerHTML=`<div class="dlg"><div class="dh2"><div><h3>Semaine type de ${esc(pname(p))}</h3><span class="lbl">Le point de départ de chaque nouvelle semaine</span></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
       ${availGrid(p,true,ok?'':'disabled')}
       <div class="row between"><button class="btn ghost" data-act="closedlg">Annuler</button><button class="btn" data-act="typesave" ${ok&&changed?'':'disabled'}>Valider</button></div></div>`;return}
   if(dlgGym){const g=dlgGym;
-    box.innerHTML=`<div class="dlg"><div class="dh2"><h3>Séance de salle</h3><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
+    box.innerHTML=`<div class="dlg"><div class="dh2"><h3>Séance de salle</h3><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
       <div class="lbl">Jour</div><div class="chipsrow">${DAYS.map((d,i)=>`<button class="chipbtn" data-act="gymday" data-v="${i}" aria-pressed="${g.d===i}">${d.slice(0,3)} ${keyDate(ui.week,i).getDate()}</button>`).join('')}</div>
       <div class="lbl">Heure</div><div class="chipsrow">${GYM_TIMES.map(t=>`<button class="chipbtn" data-act="gymtime" data-v="${t}" aria-pressed="${g.t===t}">${hhmm(t)}</button>`).join('')}</div>
       <div class="lbl">Salle</div><div class="chipsrow">${['auteuil','beaugrenelle'].map(c=>`<button class="chipbtn" data-act="gymclub" data-v="${c}" aria-pressed="${g.club===c}">${CLUBS[c]}</button>`).join('')}</div>
@@ -581,13 +581,13 @@ function renderDlg(){
   if(dlgPick){const {d,b}=dlgPick;
     const list=c=>clubSlots(c).filter(x=>x.day===d&&x.band===b&&x.cat).map(x=>`<button class="alt ${isPinned(x)?'cur':''}" data-act="pin" data-id="${x.id}"><span class="aw"><b>${hhmm(x.time)}</b>${courseTag(x.course)}</span><span class="lbl">${esc(x.coach.split(' · ')[0])}</span></button>`).join('');
     const A=list('auteuil'),B=list('beaugrenelle'),X=WEEKDATA[ui.week]?list('inconnu'):'';
-    box.innerHTML=`<div class="dlg"><div class="dh2"><div><h3>${DAYS[d]} ${keyDate(ui.week,d).getDate()}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
+    box.innerHTML=`<div class="dlg"><div class="dh2"><div><h3>${DAYS[d]} ${keyDate(ui.week,d).getDate()}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
       <div class="chipsrow">${(bs=>BANDS.map((t,i)=>`<button class="chipbtn" data-act="pickband" data-v="${i}" aria-pressed="${i===b}" ${bs.has(i)?'':'disabled'}>${t.split(' ')[0]}</button>`).join(''))(bandsWith(d))}</div>
       <div class="row between"><span class="lbl">Lieu</span><span class="seg sm" role="group" aria-label="Lieu">${[['','Les deux'],['auteuil','Auteuil'],['beaugrenelle','Beaugrenelle']].map(([k,l])=>`<button data-act="place" data-d="${d}" data-b="${b}" data-v="${k}" aria-pressed="${(lieuAt(d,b)||'')===k}">${l}</button>`).join('')}</span></div>
       <div class="lbl">Ou un cours précis</div>
       ${A?`<div class="lbl">Auteuil</div><div class="alts">${A}</div>`:''}${B?`<div class="lbl">Beaugrenelle</div><div class="alts">${B}</div>`:''}${X?`<div class="lbl">Club à voir sur l’appli FDS</div><div class="alts">${X}</div>`:''}${A||B||X?'':'<p class="none">Aucun cours sur ce créneau.</p>'}
       <button class="btn ghost sm" data-act="resetcell" data-d="${d}" data-b="${b}" ${cellPins(d,b).length||lieuAt(d,b)?'':'disabled'}>Réinitialiser ce créneau</button></div>`;return}
-  if(dlgCat){box.innerHTML=`<div class="dlg"><div class="dh2"><h3>Ajouter un cours ${CATLBL[dlgCat]}</h3><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>${altList(dlgCat,null,6)}</div>`;return}
+  if(dlgCat){box.innerHTML=`<div class="dlg"><div class="dh2"><h3>Ajouter un cours ${CATLBL[dlgCat]}</h3><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>${altList(dlgCat,null,6)}</div>`;return}
   const s=slotById(dlgSlot);if(!s){closeDlg();return}
   const w=s.gym?gymWho(s):who(s),plan=week().plan||{},inPlan=s.cat&&plan[s.cat]===s.id,booked=(week().booked||{})[s.id]||{},b=booking(s),anyBk=PEOPLE.some(p=>booked[p]),isGym=!!s.gym,inv=((week().invites||{})[s.id]||{}).to||{},solos=soloList().filter(o=>o.s.id===s.id),pk=planState().pick,forMe=!!(ui.me&&s.cat&&!inPlan&&pk[s.cat]&&!pk[s.cat].w.some(x=>x.p===ui.me&&x.ok)&&((week().solo||{})[ui.me]||{})[s.cat]!==s.id&&w.some(x=>x.p===ui.me&&x.ok)),done=inPlan&&isDone(ui.week,s),seen=isDone(shiftWeek(ui.week,-1),s);
   /* On peut inviter quelqu'un d'autre que soi, tant qu'elle n'est pas déjà de la partie. */
@@ -596,7 +596,7 @@ function renderDlg(){
   const was=x=>isGym?x.ok:!!(booked[x.p]||(inPlan&&x.ok)||solos.some(o=>o.p===x.p));
   const canInvite=x=>ui.me&&x.p!==ui.me&&b.st!=='past'&&(isGym?!x.ok:!(booked[x.p]||(inPlan&&x.ok)||solos.some(o=>o.p===x.p)));
   box.innerHTML=`<div class="dlg c-${s.cat||'x'}">
-    <div class="dh2"><div><span class="sc">${CATLBL[s.cat]||(isGym?'Salle':'')}</span><h3>${esc(whenTxt(s))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
+    <div class="dh2"><div><span class="sc">${CATLBL[s.cat]||(isGym?'Salle':'')}</span><h3>${esc(whenTxt(s))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
     <p class="meta">${courseTag(s.course)} ${isGym?'':`<b class="club">${CLUBS[s.club]}</b> · `}${isGym?`<b class="club">${CLUBS[s.club]}</b> · accès libre`:esc(s.coach)}${s.dur?' · '+s.dur+' min':''}${s.max?' · '+s.max+' places':''}</p>
     ${past?`<div class="lbl">Cours passé · réinscrite pour la semaine suivante ?</div>`:''}
     <div class="people">${w.map(x=>`<div class="prow2">${av(x.p,x.ok?'on':'off')}<span class="pn">${esc(pname(x.p))}</span>
