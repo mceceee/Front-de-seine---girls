@@ -668,8 +668,8 @@ function renderDlg(){
     <div class="dh2"><div><span class="sc">${CATLBL[s.cat]||(isGym?'Salle':'')}</span><h3>${esc(whenTxt(s))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
     <p class="meta">${courseTag(s.course)} ${isGym?'':`<b class="club">${CLUBS[s.club]}</b> · `}${isGym?`<b class="club">${CLUBS[s.club]}</b> · accès libre`:esc(s.coach)}${s.dur?' · '+s.dur+' min':''}${s.max?' · '+s.max+' places':''}</p>
     ${past?`<div class="lbl">Cours passé · réinscrite pour la semaine suivante ?</div>`:''}
-    <div class="people">${w.map(x=>`<div class="prow2">${av(x.p,booked[x.p]?'bk':x.ok?(x.cand?'free':'on'):x.inv==='ask'?'ask':x.inv==='no'?'no':x.go&&x.a>0&&x.pr>0?'free':'off')}<span class="pn">${esc(pname(x.p))}</span>
-      <span class="ps">${isGym?(x.ok?'vient':'ne vient pas'):solos.length&&!solos.some(o=>o.p===x.p)?'':x.out?'a laissé sa place':x.go&&x.ok?'vient':x.inv==='ask'&&!x.ok?'invitée, en attente':x.inv==='no'&&!x.ok?'a décliné l’invitation':x.go&&x.a>0&&x.pr>0?'dispo':x.own&&!(x.a>0&&x.pr>0)?'l’a ajouté à la semaine':x.pr===0?'ne veut pas ce cours':x.a===0?'pas dispo':x.a===2?'créneau idéal':'possible'}${x.pr===2&&x.ok?' · adore':''}</span>
+    <div class="people">${w.map(x=>`<div class="prow2">${av(x.p,booked[x.p]?'bk':solos.some(o=>o.p===x.p)?'on':solos.length&&x.inv==='ask'?'ask':solos.length&&x.inv==='no'?'no':x.ok?(x.cand?'free':'on'):x.inv==='ask'?'ask':x.inv==='no'?'no':x.go&&x.a>0&&x.pr>0?'free':'off')}<span class="pn">${esc(pname(x.p))}</span>
+      <span class="ps">${isGym?(x.ok?'vient':'ne vient pas'):solos.some(o=>o.p===x.p)?'vient':solos.length&&x.inv==='ask'?'invitée, en attente':solos.length&&x.inv==='no'?'a décliné l’invitation':x.out?'a laissé sa place':x.go&&x.ok?'vient':x.inv==='ask'&&!x.ok?'invitée, en attente':x.inv==='no'&&!x.ok?'a décliné l’invitation':x.go&&x.a>0&&x.pr>0?'dispo':x.own&&!(x.a>0&&x.pr>0)?'l’a ajouté à la semaine':x.pr===0?'ne veut pas ce cours':x.a===0?'pas dispo':solos.length?'dispo':x.a===2?'créneau idéal':'possible'}${x.pr===2&&x.ok?' · adore':''}</span>
       ${past?(was(x)?(()=>{const y=!!(((nextW.booked||{})[s.id]||{})[x.p]),n=!!(((nextW.rebookNo||{})[s.id]||{})[x.p]);
         return `<span class="seg sm" role="group" aria-label="${esc(pname(x.p))} réinscrite"><button data-act="rebook" data-w="${nextK}" data-id="${s.id}" data-p="${x.p}" data-v="1" aria-pressed="${y}">Oui</button><button data-act="rebook" data-w="${nextK}" data-id="${s.id}" data-p="${x.p}" data-v="0" aria-pressed="${n}">Non</button></span>`})():''):`
       ${x.out?`<button class="btn sm ghost" data-act="in" data-id="${s.id}" data-p="${x.p}">Remettre</button>`:''}
@@ -681,18 +681,14 @@ function renderDlg(){
         <span class="rbp">${avs(who(slotById(o.id)))}<button class="btn sm ${kept?'ghost':''}" data-act="${kept?'unsolo':'solo'}" data-p="${x.p}" data-cat="${s.cat}" data-id="${o.id}">${kept?'Retirer':'Retenir'}</button></span></div>`;
       return cs||opts2.length?`<div class="lbl">${ui.me===x.p?'À la place, pour toi':'À la place, pour '+esc(pname(x.p))}</div><div class="alts">${cs?row(cs,true):''}${opts2.map(o=>row(o,false)).join('')}</div>`
         :`<p class="none">Aucun autre créneau ${CATLBL[s.cat]} possible pour ${esc(pname(x.p))} cette semaine.</p>`}).join(''):''}
-    ${solos.filter(o=>!ui.me||o.p===ui.me).map(o=>{const alt=soloOptions(o.p,o.c,pk,4).filter(a=>a.id!==s.id).slice(0,3);
-      return alt.length?`<div class="lbl">${ui.me===o.p?'Changer pour':'Changer pour '+esc(pname(o.p))+' :'}</div><div class="alts">${alt.map(a=>`<button class="alt" data-act="solo" data-p="${o.p}" data-cat="${o.c}" data-id="${a.id}"><span class="aw"><b>${DAYS[a.day].slice(0,3)}. ${hhmm(a.time)}</b>${courseTag(a.course)}${clubNote(a)?'<span class="lbl">'+clubNote(a)+'</span>':''}</span>${avs(who(slotById(a.id)))}</button>`).join('')}</div>`:''}).join('')}
-    ${solos.length?(ui.rmAsk&&solos.length>1&&ui.me&&solos.some(o=>o.p===ui.me)
-      ?`<div class="subpanel"><h3 style="font-size:16px">Retirer ce créneau ?</h3><div class="row between"><button class="btn ghost" data-act="rmall">Pour toutes</button><button class="btn" data-act="rmme">Juste pour toi</button></div></div>`
-      :`<button class="btn ghost sm" data-act="rmask">Retirer ce créneau</button>`):''}
     <div class="row between" ${isGym?'hidden':''}><span class="lbl">${b.st==='past'?'Cours passé':seen||placesOf(s.id)!==null?'Places restantes vues dans l’appli':'Places visibles une fois le cours de la semaine d’avant terminé'}</span>${(seen||placesOf(s.id)!==null)&&b.st!=='past'?placesCtl(s):''}</div>
     ${b.st==='soon'&&!isGym?`<div class="lbl">Inscriptions dès ${b.dOpen===1?'demain':esc(b.lbl)}</div>`:''}
     ${inPlan&&!done?`${ui.rfShow?`<div class="subpanel"><div class="row between"><h3 style="font-size:16px">Remplacer ce cours</h3><button class="btn ghost sm" data-act="rfshow">Fermer</button></div>${replaceLists(s.cat,s)}</div>`:`<button class="btn ghost" data-act="rfshow">Remplacer ce cours</button>`}<button class="btn ghost sm" data-act="unplan" data-v="${s.cat}">${PEOPLE.some(p=>p!==ui.me&&w.some(x=>x.go&&x.ok&&x.p===p))&&w.some(x=>x.go&&x.ok&&x.p===ui.me)?'Me retirer de ce cours':'Retirer de la semaine'}</button>`:''}
+    ${!inPlan&&solos.length&&!past&&(!ui.me||solos.some(o=>o.p===ui.me))?`${ui.rfShow?`<div class="subpanel"><div class="row between"><h3 style="font-size:16px">Remplacer ce cours</h3><button class="btn ghost sm" data-act="rfshow">Fermer</button></div>${replaceLists(s.cat,s)}</div>`:`<button class="btn ghost" data-act="rfshow">Remplacer ce cours</button>`}<button class="btn ghost sm" data-act="rmask">${solos.length>1&&ui.me?'Me retirer de ce cours':'Retirer de la semaine'}</button>`:''}
     ${!inPlan&&s.cat&&!isGym&&!solos.length&&b.st!=='past'?(alts=>alts.length?`<div class="lbl">Autres cours ${CATLBL[s.cat]} à la même heure</div><div class="alts">${alts.map(x=>`<button class="alt" data-act="slot" data-id="${x.s.id}"><span class="aw"><b>${DAYS[x.s.day].slice(0,3)}. ${hhmm(x.s.time)}</b>${courseTag(x.s.course)}${clubNote(x.s)?'<span class="lbl">'+clubNote(x.s)+'</span>':''}</span>${avs(x.w)}</button>`).join('')}</div>`:'')(candidates().filter(x=>x.cat===s.cat&&x.day===s.day&&x.band===s.band&&x.id!==s.id&&booking(x).st!=='past').map(x=>({s:x,w:who(x)}))):''}
     ${isPinned(s)?`<button class="btn ghost sm" data-act="unpin" data-v="${s.cat}">Ne plus imposer ce cours</button>`:''}
     ${forMe?`<button class="btn" data-act="solo" data-p="${ui.me}" data-cat="${s.cat}" data-id="${s.id}">Retenir pour ${esc(pname(ui.me))}</button>`:''}
-    ${inPlan||forMe?'':s.cat?`<button class="btn" data-act="setplan" data-cat="${s.cat}" data-id="${s.id}">Mettre dans notre semaine</button>`:''}</div>`}
+    ${inPlan||forMe||(solos.length&&(!ui.me||solos.some(o=>o.p===ui.me)))||past?'':s.cat?`<button class="btn" data-act="setplan" data-cat="${s.cat}" data-id="${s.id}">${ui.me?'Ajouter à ma semaine':'Mettre dans notre semaine'}</button>`:''}</div>`}
 function openDlg(){renderDlg();const d=document.getElementById('dlg');if(!d.open)d.showModal()}
 /* Tout retrait passe par une confirmation. Renvoie la question à poser, ou null si l'action n'en demande pas. */
 function sureFor(a,ds){const me=ui.me,wk=week();
@@ -713,6 +709,9 @@ function sureFor(a,ds){const me=ui.me,wk=week();
   if(a==='unsolo'){const id=((wk.solo||{})[ds.p]||{})[ds.cat],sl=id&&slotById(id);if(!sl)return null;
     return {title:'Retirer '+sl.course+(ds.p===me?'':' de '+pname(ds.p))+' ?',sub:whenTxt(sl),opts:[{label:'Retirer',ds:{act:'unsolo',p:ds.p,cat:ds.cat}}]}}
   return null}
+/* Par défaut, toutes celles qui sont dispo sont invitées : on décoche si besoin. */
+function invDefault(id){const sl=slotById(id),o={},so=week().solo||{};if(!sl||sl.gym)return o;
+  who(sl).forEach(x=>{if(x.p!==ui.me&&x.a>0&&x.pr>0&&!((so[x.p]||{})[sl.cat]===sl.id)&&!(x.go&&x.ok))o[x.p]=true});return o}
 function closeDlg(){dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null;dlgInv=null;dlgSure=null;const d=document.getElementById('dlg');if(d.open)d.close()}
 document.getElementById('dlg').addEventListener('close',()=>{dlgSure=null;dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null;dlgInv=null});
 document.getElementById('dlg').addEventListener('click',e=>{if(e.target&&e.target.id==='dlg'&&!ui.rfOpen)closeDlg()});
@@ -784,7 +783,7 @@ document.addEventListener('click',e=>{
     if(ui.me)patch=addPatch(sl,null,ui.me);
     else CATS.forEach(([c])=>{const x=c!==sl.cat&&p[c]&&slotById(p[c]);if(x&&x.day===sl.day){patch.plan[c]=null;patch.by[c]=null;patch.pins[c]=null}});
     ui.tab='semaine';
-    if(ui.me){dlgPick=null;dlgCat=null;ui.rf=null;ui.rfOpen=null;dlgSlot=null;dlgInv={id:sl.id,patch,inv:{}};render();openDlg();return}
+    if(ui.me){dlgPick=null;dlgCat=null;ui.rf=null;ui.rfOpen=null;dlgSlot=null;dlgInv={id:sl.id,patch,inv:invDefault(sl.id)};render();openDlg();return}
     save(weekPath(),patch);closeDlg();toast(sl.course+' de '+DAYS[sl.day].toLowerCase()+' ajouté à votre semaine.')}
   else if(a==='place'){save(weekPath(),{lieu:{[el.dataset.d+'-'+el.dataset.b]:v||null}})}
   else if(a==='resetcell'){const d=+el.dataset.d,patch={pins:{},lieu:{}},pins=week().pins||{};CATS.forEach(([c])=>{const x=pins[c]&&slotById(pins[c]);if(x&&x.day===d)patch.pins[c]=null});
@@ -836,7 +835,7 @@ document.addEventListener('click',e=>{
   else if(a==='setplan'){const c=el.dataset.cat,rm=el.dataset.rm;let patch={plan:{[c]:el.dataset.id},by:{[c]:null}};
     if(ui.me)patch=addPatch(slotById(el.dataset.id),rm&&rm!==c?rm:null,ui.me);
     else if(rm&&rm!==c){patch.plan[rm]=null;patch.by[rm]=null;patch.pins={[rm]:null}}
-    if(ui.me){dlgCat=null;dlgPick=null;ui.rf=null;ui.rfOpen=null;dlgSlot=null;dlgInv={id:el.dataset.id,patch,inv:{}};render();openDlg();return}
+    if(ui.me){dlgCat=null;dlgPick=null;ui.rf=null;ui.rfOpen=null;dlgSlot=null;dlgInv={id:el.dataset.id,patch,inv:invDefault(el.dataset.id)};render();openDlg();return}
     save(weekPath(),patch);
     if(dlgSlot||dlgCat){closeDlg();toast('Ajouté à votre semaine.')}}
   else if(a==='clearplan'){save(weekPath(),{plan:null,solo:null,out:null,by:null,go:null});ui.swap=null}
