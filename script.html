@@ -108,7 +108,7 @@ const Store=(()=>{
 })();
 
 /* ---------- État d'interface ---------- */
-const ui={tab:'semaine',week:defaultWeek(),me:null,edit:'p1',cat:'all',together:false,day:0,scope:'type',swap:null,showAll:false,arm:null,menu:false};
+const ui={tab:'semaine',week:defaultWeek(),me:null,edit:'p1',cat:'all',together:false,day:0,scope:'week',swap:null,showAll:false,arm:null,menu:false};
 try{ui.me=localStorage.getItem('fds:me')||null;if(ui.me)ui.edit=ui.me}catch(e){}
 
 const settings=()=>Store.get('group/settings');
@@ -277,7 +277,7 @@ function renderTop(){
       ${(items=>items.length?`<span class="more"><button class="rnd" data-act="menu" aria-label="Autres actions" aria-expanded="${!!ui.menu}">⋯</button>${ui.menu?`<div class="menu" role="menu">
         ${items.map(([k,l])=>
           `<button class="menuitem ${ui.arm===k?'danger':''}" role="menuitem" data-act="arm" data-v="${k}" ${Store.ready&&!Store.readonly?'':'disabled'}>${ui.arm===k?'Confirmer : tout effacer':esc(l)}</button>`).join('')}</div>`:''}</span>`:'')(
-        ui.tab==='semaine'?(Store.link?[['link','Copier le lien pour Coco et Clem']]:[]).concat([['week','Réinitialiser la semaine du '+dayLabel(wk,0)]]):ui.tab==='dispos'?[['mine','Réinitialiser les dispos de '+pname(resetWho())]]:[])}
+        ui.tab==='semaine'?(Store.link?[['link','Copier le lien pour Coco et Clem']]:[]).concat([['week','Réinitialiser la semaine du '+dayLabel(wk,0)]]):ui.tab==='dispos'?[['type',ui.scope==='type'?'Revenir à la semaine du '+dayLabel(wk,0):'Modifier la semaine type de '+pname(resetWho())],['mine','Réinitialiser les dispos de '+pname(resetWho())]]:[])}
     </div>`}
 
 /* Une semaine sur 7 colonnes : les séances posées sur leur jour, les jours de repos laissés vides. */
@@ -470,13 +470,12 @@ function renderPlanning(){
 function renderDispos(){
   const p=ui.edit,av_=editAvail(p),weekCustom=availOf(p).custom,scopeWeek=ui.scope==='week',conf=!!(week().confirmed||{})[p];
   const dis=Store.ready&&!Store.readonly?'':'disabled';
-  let h=`<section class="blk"><div class="hd"><h2>Dispos de ${esc(pname(p))}</h2></div>
-    ${(c=>conf?`<div class="confirm ok"><span class="avs">${av(p,'bk','✓')}</span><div class="ct"><b>Dispos validées</b><span>Semaine du ${esc(dayLabel(ui.week,0))}</span></div><button class="btn ghost sm" data-act="confirm" ${dis}>Annuler</button></div>`
+  let h=`<section class="blk"><div class="hd"><h2>${scopeWeek?'Dispos de '+esc(pname(p)):'Semaine type de '+esc(pname(p))}</h2></div>
+    ${!scopeWeek?'':(c=>conf?`<div class="confirm ok"><span class="avs">${av(p,'bk','✓')}</span><div class="ct"><b>Dispos validées</b><span>Semaine du ${esc(dayLabel(ui.week,0))}</span></div><button class="btn ghost sm" data-act="confirm" ${dis}>Annuler</button></div>`
       :`<div class="confirm ko"><span class="avs">${av(p,'off')}</span><div class="ct"><b>Dispos à valider</b><span>Semaine du ${esc(dayLabel(ui.week,0))} · ${c.left>1?'avant '+esc(longDate(c.deadline)).replace(/\.$/,'')+' soir':c.left===1?'avant demain soir':c.left===0?'ce soir au plus tard':'les inscriptions sont déjà ouvertes'}</span></div><button class="btn" data-act="confirm" ${dis}>Valider mes dispos</button></div>`)(confirmInfo())}
     <div class="two"><div class="col">
-      <div class="row"><span class="seg" role="group" aria-label="Portée"><button data-act="scope" data-v="type" aria-pressed="${!scopeWeek}">Semaine type</button><button data-act="scope" data-v="week" aria-pressed="${scopeWeek}">Semaine du ${esc(dayLabel(ui.week,0))}${weekCustom?' · modifiée':''}</button></span>
-        ${scopeWeek?`<span class="wkmini"><button class="rnd" data-act="week" data-v="-1" aria-label="Semaine précédente">‹</button><button class="rnd" data-act="week" data-v="1" aria-label="Semaine suivante">›</button></span>`:''}
-        ${scopeWeek&&weekCustom?`<button class="btn ghost sm" data-act="resetweek" ${dis}>Revenir à la semaine type</button>`:''}</div>
+      ${scopeWeek?(weekCustom?`<div class="row"><span class="lbl">Semaine modifiée par rapport à ta semaine type</span><button class="btn ghost sm" data-act="resetweek" ${dis}>Revenir à la semaine type</button></div>`:'')
+        :`<div class="row between"><span class="lbl">Ta semaine type sert de point de départ à chaque nouvelle semaine.</span><button class="btn sm" data-act="scope" data-v="week">Terminé</button></div>`}
       <div class="scroller"><table class="av-t"><thead><tr><th></th>${DAYS.map((d,i)=>`<th>${d.slice(0,3)}${scopeWeek?`<span class="dn">${keyDate(ui.week,i).getDate()}</span>`:''}</th>`).join('')}</tr>
         <tr><th></th>${DAYS.map((d,i)=>`<td><select id="mode${i}" data-act="mode" data-d="${i}" aria-label="${d}" ${dis}>${Object.keys(MODES).map(k=>`<option value="${k}" ${av_.m[i]===k?'selected':''}>${MODES[k]}</option>`).join('')}</select></td>`).join('')}</tr></thead><tbody>`;
   for(let b=0;b<NB;b++){h+=`<tr><th class="rowh">${BANDS[b]}</th>`;
@@ -572,6 +571,7 @@ document.addEventListener('click',e=>{
   if(lpDone){lpDone=false;return}
   {const b=e.target.closest('[data-act="arm"]');
     if(b&&b.dataset.act==='arm'){const k=b.dataset.v;
+      if(k==='type'){ui.menu=false;ui.arm=null;ui.scope=ui.scope==='type'?'week':'type';render();return}
       if(k==='link'){ui.menu=false;ui.arm=null;const L=Store.link;
         (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(L):Promise.reject()).then(()=>toast('Lien copié. Envoie-le à Coco et Clem.'),()=>toast('Copie impossible : copie l’adresse de la page à la main.'));renderTop();return}
       if(ui.arm!==k){ui.arm=k;render();return}
@@ -585,9 +585,9 @@ document.addEventListener('click',e=>{
     if(ui.menu){ui.menu=false;renderTop()}}
   const el=e.target.closest('[data-act]');if(!el||el.tagName==='SELECT'||el.tagName==='INPUT')return;
   const a=el.dataset.act,v=el.dataset.v;
-  if(a==='tab'){ui.tab=v;ui.menu=false;try{history.replaceState(null,'','#'+v)}catch(x){try{location.hash=v}catch(y){}}}
+  if(a==='tab'){ui.tab=v;ui.menu=false;ui.scope='week';try{history.replaceState(null,'','#'+v)}catch(x){try{location.hash=v}catch(y){}}}
   else if(a==='club'){save('group/settings',{club:v});ui.swap=null}
-  else if(a==='week'){ui.week=shiftWeek(ui.week,+v);ui.swap=null}
+  else if(a==='week'){ui.scope='week';ui.week=shiftWeek(ui.week,+v);ui.swap=null}
   else if(a==='me'){if(ui.me===v&&ui.tab!=='dispos'){ui.me=null;try{localStorage.removeItem('fds:me')}catch(x){}}else{ui.me=v;ui.edit=v;try{localStorage.setItem('fds:me',v)}catch(x){}}}
   else if(a==='edit'){ui.edit=v}
   else if(a==='cat'){ui.cat=v}
