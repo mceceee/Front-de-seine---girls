@@ -1051,8 +1051,11 @@ document.addEventListener('click',e=>{
   else if(a==='rfclear'){ui.rfDraft=[];renderDlg();return}
   else if(a==='rfsave'){if(ui.rfOpen){const f=rfState(rfBase());f[ui.rfOpen]=(ui.rfDraft||[]).slice();ui.rf=f}ui.rfOpen=null;renderDlg();return}
   else if(a==='slot'){ui.rf=null;ui.rfOpen=null;dlgSlot=el.dataset.id;dlgCat=null;openDlg();return}
-  else if(a==='pin'){const sl=slotById(el.dataset.id),patch={pins:{[sl.cat]:sl.id}};if(week().plan){patch.plan={[sl.cat]:sl.id};patch.by={[sl.cat]:ui.me||null}}
-    save(weekPath(),patch);closeDlg();ui.tab='semaine';toast(sl.course+' de '+DAYS[sl.day].toLowerCase()+' choisi pour la semaine du '+dayLabel(ui.week,0)+'.')}
+  else if(a==='pin'){const sl=slotById(el.dataset.id),p=week().plan||{};
+    /* Un cours choisi à la main va directement dans la semaine. Un seul cours par jour : il remplace celui du même jour. */
+    const patch={plan:{[sl.cat]:sl.id},by:{[sl.cat]:ui.me||null},pins:{[sl.cat]:null}};
+    CATS.forEach(([c])=>{const x=c!==sl.cat&&p[c]&&slotById(p[c]);if(x&&x.day===sl.day){patch.plan[c]=null;patch.by[c]=null;patch.pins[c]=null}});
+    save(weekPath(),patch);closeDlg();ui.tab='semaine';toast(sl.course+' de '+DAYS[sl.day].toLowerCase()+' ajouté à votre semaine.')}
   else if(a==='place'){save(weekPath(),{lieu:{[el.dataset.d+'-'+el.dataset.b]:v||null}})}
   else if(a==='resetcell'){const d=+el.dataset.d,patch={pins:{},lieu:{}},pins=week().pins||{};CATS.forEach(([c])=>{const x=pins[c]&&slotById(pins[c]);if(x&&x.day===d)patch.pins[c]=null});
     for(let b=0;b<NB;b++)patch.lieu[d+'-'+b]=null;save(weekPath(),patch);closeDlg();toast('C’est remis à zéro pour ce jour.')}
