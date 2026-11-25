@@ -597,9 +597,9 @@ function renderDlg(){
     box.innerHTML=`<div class="dlg c-${sl.cat}"><div class="dh2"><div><span class="lbl" style="color:var(--green)">Ajouté à ta semaine</span><h3>${esc(whenTxt(sl))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
       <p class="meta">${courseTag(sl.course)} <b class="club">${CLUBS[sl.club]}</b></p>
       <h3 style="font-size:17px">Tu invites quelqu’un ?</h3>
-      <div class="people">${w.filter(x=>x.p!==ui.me).map(x=>`<div class="prow2">${av(x.p,x.ok?'bk':'on')}<span class="pn">${esc(pname(x.p))}</span>
-        <span class="ps">${x.ok?'vient déjà':x.pr===0?'n’aime pas ce cours':x.a===0?'pas dispo à cette heure':'dispo'}</span>
-        ${x.ok?'':`<button class="btn sm ${inv[x.p]==='ask'?'':'ghost'}" data-act="invite" data-id="${sl.id}" data-p="${x.p}">${inv[x.p]==='ask'?'Invitée ✓':'Inviter'}</button>`}</div>`).join('')}</div>
+      <div class="people">${w.filter(x=>x.p!==ui.me).map(x=>`<div class="prow2">${(free=>`<span title="${esc(pname(x.p))}">${av(x.p,x.ok?'on':inv[x.p]==='ask'?'ask':inv[x.p]==='no'?'no':free?'free':'off')}</span>
+        <span class="ps">${x.ok?'vient déjà':inv[x.p]==='no'?'a décliné':x.pr===0?'n’aime pas ce cours':x.a===0?'pas dispo à cette heure':'dispo'}</span>
+        ${x.ok?'':`<button class="btn sm ${inv[x.p]==='ask'?'':'ghost'}" data-act="invite" data-id="${sl.id}" data-p="${x.p}" ${free?'':'disabled'}>${inv[x.p]==='ask'?'Invitée ✓':'Inviter'}</button>`}`)(x.a>0&&x.pr>0)}</div>`).join('')}</div>
       <button class="btn" data-act="closedlg">${Object.values(inv).includes('ask')?'Terminé':'Non, juste moi'}</button></div>`;return}
   if(dlgAsk){const w=dlgAsk;
     box.innerHTML=`<div class="dlg"><div class="dh2"><div><span class="lbl">Rappel pour Cece</span><h3>Planning de la semaine du ${esc(dayLabel(w,0))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
@@ -631,7 +631,7 @@ function renderDlg(){
   const past=isDone(ui.week,s),nextK=shiftWeek(ui.week,1),nextW=week(nextK);
   /* celles qui étaient de la séance */
   const was=x=>isGym?x.ok:!!(booked[x.p]||(inPlan&&x.ok)||solos.some(o=>o.p===x.p));
-  const canInvite=x=>ui.me&&x.p!==ui.me&&b.st!=='past'&&(isGym?!x.ok:!(booked[x.p]||(inPlan&&x.ok)||solos.some(o=>o.p===x.p)));
+  const canInvite=x=>ui.me&&x.p!==ui.me&&b.st!=='past'&&(isGym?!x.ok:x.a>0&&x.pr>0&&!(booked[x.p]||(inPlan&&x.ok)||solos.some(o=>o.p===x.p)));
   box.innerHTML=`<div class="dlg c-${s.cat||'x'}">
     <div class="dh2"><div><span class="sc">${CATLBL[s.cat]||(isGym?'Salle':'')}</span><h3>${esc(whenTxt(s))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
     <p class="meta">${courseTag(s.course)} ${isGym?'':`<b class="club">${CLUBS[s.club]}</b> · `}${isGym?`<b class="club">${CLUBS[s.club]}</b> · accès libre`:esc(s.coach)}${s.dur?' · '+s.dur+' min':''}${s.max?' · '+s.max+' places':''}</p>
