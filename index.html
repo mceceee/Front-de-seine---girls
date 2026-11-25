@@ -645,7 +645,7 @@ function av(p,cls,txt){return `<span class="av ${cls}">${esc(txt==null?initial(p
 function avs(w,booked){return `<span class="avs">`+w.map(x=>{const bk=booked&&booked[x.p];
   const st=x.inv==='ask'&&!(x.ok&&!x.cand)?'ask':x.inv==='no'&&!(x.ok&&!x.cand)?'no':null;
   if(st)return `<span class="av ${st}" title="${esc(pname(x.p))} : ${st==='ask'?'invitée, en attente':'a décliné'}">${esc(initial(x.p))}</span>`;
-  return `<span class="av ${bk?'bk':x.ok?(x.cand?'free':'on'):x.inv==='ask'?'ask':x.inv==='no'?'no':x.go&&x.a>0&&x.pr>0?'free':'off'}" title="${esc(pname(x.p))} : ${bk?'a réservé':x.ok?(x.solo?'y va':x.cand?'dispo':'vient'):x.inv==='ask'?'invitée, en attente':x.inv==='no'?'a décliné':x.go&&x.a>0&&x.pr>0?'dispo, pas inscrite':x.solo?'n’y va pas':x.out?'pas de place pour elle':(x.pr===0?'ne veut pas ce cours':'pas dispo')}">${esc(initial(x.p))}</span>`}).join('')+`</span>`}
+  return `<span class="av ${bk?'bk':x.ok?(x.cand?'free':'on'):x.inv==='ask'?'ask':x.inv==='no'?'no':(x.go||x.solo)&&x.a>0&&x.pr>0?'free':'off'}" title="${esc(pname(x.p))} : ${bk?'a réservé':x.ok?(x.solo?'y va':x.cand?'dispo':'vient'):x.inv==='ask'?'invitée, en attente':x.inv==='no'?'a décliné':(x.go||x.solo)&&x.a>0&&x.pr>0?'dispo, pas inscrite':x.solo?'n’y va pas':x.out?'pas de place pour elle':(x.pr===0?'ne veut pas ce cours':'pas dispo')}">${esc(initial(x.p))}</span>`}).join('')+`</span>`}
 function placesTxt(s,w){const pl=placesOf(s.id),need=needOf(s,w);
   if(pl===null)return '';
   if(pl===0)return `<span class="pl ${need?'bad':''}">Complet</span>`;
@@ -733,9 +733,8 @@ function soloHints(c,r,pick,me){if(!pick||!CATLBL[c]||r.label)return '';const so
   return r.w.filter(x=>!x.ok&&(!me||x.p===me)&&!(so[x.p]&&so[x.p][c])).map(x=>{const a=soloFor(x.p,c,pick);
     return a?`<span class="ss solo">${esc(pname(x.p))} : ${DAYS[a.day].slice(0,3).toLowerCase()}. ${hhmm(a.time)} ${esc(a.course)}</span>`:''}).join('')}
 /* week.invites[créneau] = {from:'p1', to:{p2:'ask'|'yes'|'no'}} */
-/* Déjà de la partie : le cours est dans sa semaine (groupe, créneau perso, salle) ou elle l'a réservé. */
+/* Déjà de la partie : le cours est dans sa semaine (groupe, créneau perso, salle) ). */
 function hasIt(p,sl){const wk=week();if(sl.gym)return !!(gymPart(sl.id.slice(4))||{})[p];
-  if(((wk.booked||{})[sl.id]||{})[p])return true;
   if(((wk.solo||{})[p]||{})[sl.cat]===sl.id)return true;
   return (wk.plan||{})[sl.cat]===sl.id&&who(sl).some(x=>x.p===p&&x.ok)}
 function invitesFor(p){const iv=week().invites||{};return Object.keys(iv).filter(id=>iv[id]&&iv[id].to&&iv[id].to[p]==='ask'&&slotById(id)&&!isDone(ui.week,slotById(id))&&!hasIt(p,slotById(id))).map(id=>({s:slotById(id),from:iv[id].from}))}
@@ -771,7 +770,7 @@ function strip(pick,opts){const byDay={},add=(d,c,r)=>(byDay[d]=byDay[d]||[]).pu
   ((opts&&opts.gyms)||[]).forEach(g=>{const w=gymWho(g);if(mine(w))add(g.day,'x',{s:g,w,n:w.filter(x=>x.ok).length})});
   const grp={};((opts&&opts.solos)||[]).forEach(o=>{const k=o.c+'|'+o.s.id;(grp[k]=grp[k]||{c:o.c,s:o.s,ps:[]}).ps.push(o.p)});
   Object.values(grp).forEach(g=>{if(me&&!g.ps.includes(me))return;
-    add(g.s.day,g.c,{s:g.s,w:PEOPLE.map(p=>({p,a:1,pr:1,ok:g.ps.includes(p),solo:true})),n:g.ps.length})});
+    add(g.s.day,g.c,{s:g.s,w:who(g.s).map(x=>Object.assign({},x,{ok:g.ps.includes(x.p),cand:false,solo:true})),n:g.ps.length})});
   ((opts&&opts.invs)||[]).forEach(o=>add(o.s.day,o.s.cat||'x',{s:o.s,w:(o.s.gym?gymWho(o.s):who(o.s)).map(x=>!o.s.gym&&((week().solo||{})[x.p]||{})[o.s.cat]===o.s.id?Object.assign({},x,{ok:true,cand:false}):x),n:0,invite:o.from}));
   ((opts&&opts.options)||[]).forEach(o=>add(o.r.s.day,o.c,Object.assign({},o.r,{option:true})));
   opts=Object.assign({pick},opts||{});
