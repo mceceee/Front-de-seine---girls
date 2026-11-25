@@ -185,6 +185,9 @@ input[type=text]::placeholder{color:var(--t3);font-weight:400}
 .scroller{overflow-x:auto}
 table.av-t{border-collapse:separate;border-spacing:3px;width:100%;min-width:520px}
 table.av-t th{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px;text-align:center;color:var(--t2)}
+table.av-t th .dn{display:block;font-size:15px;font-weight:700;letter-spacing:0;color:var(--fg);margin-top:1px;font-variant-numeric:tabular-nums}
+.wkmini{display:inline-flex;gap:4px}
+.wkmini .rnd{width:32px;height:32px;font-size:17px}
 table.av-t th.rowh{text-align:right;white-space:nowrap;padding-right:10px;font-variant-numeric:tabular-nums;color:var(--t3);font-weight:500;font-size:12px;letter-spacing:0;text-transform:none}
 table.av-t select{width:100%;border:0;background:var(--fill2);border-radius:9px;font-size:11px;padding:6px 2px;-webkit-appearance:none;appearance:none;text-overflow:ellipsis;padding:6px 20px 6px 9px;cursor:pointer;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
@@ -765,8 +768,9 @@ function renderDispos(){
       :`<div class="confirm ko"><span class="avs">${av(p,'off')}</span><div class="ct"><b>Dispos à valider</b><span>Semaine du ${esc(dayLabel(ui.week,0))} · ${c.left>1?'avant '+esc(longDate(c.deadline)).replace(/\.$/,'')+' soir':c.left===1?'avant demain soir':c.left===0?'ce soir au plus tard':'les inscriptions sont déjà ouvertes'}</span></div><button class="btn" data-act="confirm" ${dis}>Valider mes dispos</button></div>`)(confirmInfo())}
     <div class="two"><div class="col">
       <div class="row"><span class="seg" role="group" aria-label="Portée"><button data-act="scope" data-v="type" aria-pressed="${!scopeWeek}">Semaine type</button><button data-act="scope" data-v="week" aria-pressed="${scopeWeek}">Semaine du ${esc(dayLabel(ui.week,0))}${weekCustom?' · modifiée':''}</button></span>
+        ${scopeWeek?`<span class="wkmini"><button class="rnd" data-act="week" data-v="-1" aria-label="Semaine précédente">‹</button><button class="rnd" data-act="week" data-v="1" aria-label="Semaine suivante">›</button></span>`:''}
         ${scopeWeek&&weekCustom?`<button class="btn ghost sm" data-act="resetweek" ${dis}>Revenir à la semaine type</button>`:''}</div>
-      <div class="scroller"><table class="av-t"><thead><tr><th></th>${DAYS.map(d=>`<th>${d.slice(0,3)}</th>`).join('')}</tr>
+      <div class="scroller"><table class="av-t"><thead><tr><th></th>${DAYS.map((d,i)=>`<th>${d.slice(0,3)}${scopeWeek?`<span class="dn">${keyDate(ui.week,i).getDate()}</span>`:''}</th>`).join('')}</tr>
         <tr><th></th>${DAYS.map((d,i)=>`<td><select id="mode${i}" data-act="mode" data-d="${i}" aria-label="${d}" ${dis}>${Object.keys(MODES).map(k=>`<option value="${k}" ${av_.m[i]===k?'selected':''}>${MODES[k]}</option>`).join('')}</select></td>`).join('')}</tr></thead><tbody>`;
   for(let b=0;b<NB;b++){h+=`<tr><th class="rowh">${BANDS[b]}</th>`;
     for(let d=0;d<7;d++){const v=+av_.a[d*NB+b]||0;
