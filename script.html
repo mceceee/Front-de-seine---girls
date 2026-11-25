@@ -4,6 +4,8 @@ const CATALOG=/*__CAT__*/{}/*__ENDCAT__*/;
 /* Hors de claude.ai (Vercel) : identifiants publics du projet Firebase, injectés par build.py depuis firebase-config.json. */
 /* Plannings relevés sur la page du club, semaine par semaine ; sinon c'est le planning du PDF (DATA). */
 const WEEKDATA=/*__WK__*/{}/*__ENDWK__*/;
+/* Date du relevé de chaque semaine. */
+const WEEKMETA=/*__WM__*/{}/*__ENDWM__*/;
 const FIREBASE_CONFIG=/*__FB__*/null/*__ENDFB__*/;
 
 /* ---------- Référentiels ---------- */
@@ -11,7 +13,8 @@ const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 const DAYKEYS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
 const CATS=[['force','Force'],['cardio','Cardio'],['mobilite','Mobilité']];
 /* Semaines (lundi, AAAA-MM-JJ) dont le planning a été mis à jour depuis la page du club. */
-const PLANNING_WEEKS=Object.keys(WEEKDATA);
+/* Semaines dont le relevé est assez récent (fait dans les 8 jours avant le lundi) : pas besoin de le redemander. */
+const PLANNING_WEEKS=Object.keys(WEEKDATA).filter(w=>WEEKMETA[w]&&keyDate(WEEKMETA[w])>=keyDate(w,-8));
 const BOOK_AHEAD=6; /* inscriptions ouvertes 6 jours avant le cours */
 const CAT_OF={'SKILL':'force','WOD':'force','TRX FORCE':'force','TRX BENCH':'force','CORE':'force','HYROX':'force',
   'RPM':'cardio','SPRINT':'cardio','BOXING BAG':'cardio','TRX CROSS':'cardio','STRENGTH':'cardio','CEREMONY':'cardio',
@@ -532,7 +535,7 @@ function renderDlg(){
   box.classList&&box.classList.toggle('wide',!!dlgType);
   if(dlgAsk){const w=dlgAsk;
     box.innerHTML=`<div class="dlg"><div class="dh2"><div><span class="lbl">Rappel pour Cece</span><h3>Planning de la semaine du ${esc(dayLabel(w,0))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
-      <p class="meta">Envoie à Claude la page du club pour cette semaine, en HTML.</p>
+      <p class="meta">${WEEKDATA[w]?'Ce planning a été relevé en avance : renvoie la page à Claude pour vérifier que rien n’a changé.':'Envoie à Claude la page du club pour cette semaine, en HTML.'}</p>
       <ol class="steps"><li>Sur la page « Réserver » du club, affiche la semaine du ${esc(dayLabel(w,0)).replace(/\.$/,'')}.</li><li>Cmd+S, format « Page Web, HTML uniquement ».</li><li>Glisse le fichier dans la conversation avec Claude.</li></ol>
       <div class="row between"><button class="btn ghost" data-act="asklater" data-v="${w}">Plus tard</button><button class="btn" data-act="askdone" data-v="${w}">C’est envoyé</button></div></div>`;return}
   if(dlgType){const p=dlgType.p,cur=typeAvail(p),changed=cur.a!==dlgType.a||cur.m!==dlgType.m,ok=Store.ready&&!Store.readonly;
