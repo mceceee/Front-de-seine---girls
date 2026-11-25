@@ -33,7 +33,8 @@ const DEFAULT_AVAIL=DEFAULT_MODES.split('').map(m=>PRESET[m]).join('');
 const PEOPLE=['p1','p2','p3'];
 const CLUBS={auteuil:'Auteuil',beaugrenelle:'Beaugrenelle',inconnu:'Club à voir sur l’appli FDS'};
 /* Mention du lieu quand ce n'est pas Auteuil. */
-const clubNote=s=>s.club==='beaugrenelle'?'Beaugrenelle':s.club==='inconnu'?'Club à voir sur l’appli FDS':'';
+/* Le lieu, toujours affiché dans les listes pour que toutes les lignes se lisent pareil. */
+const clubNote=s=>s.gym?'':s.club==='beaugrenelle'?'Beaugrenelle':s.club==='inconnu'?'Club à voir':'Auteuil';
 
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const isObj=v=>v&&typeof v==='object'&&!Array.isArray(v);
