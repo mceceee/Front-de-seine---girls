@@ -188,8 +188,9 @@ function confirmInfo(){const firstOpen=keyDate(ui.week,-BOOK_AHEAD),deadline=key
 function placesOf(id){const p=(week().places||{})[id];return typeof p==='number'?p:null}
 
 /* Qui peut venir à ce créneau : dispo (1 possible, 2 idéal) et pas de veto sur le cours. */
-function who(s){const wk=week(),out=(wk.out||{})[s.id]||{},mine=s.cat&&(wk.plan||{})[s.cat]===s.id?(wk.by||{})[s.cat]:null;
-  return PEOPLE.map(p=>{const a=+availOf(p).a[s.day*NB+s.band]||0;const pr=prefOf(p,s.course),own=mine===p;return {p,a,pr,own,out:!!out[p],ok:(own||(a>0&&pr>0))&&!out[p]}})}
+function who(s){const wk=week(),out=(wk.out||{})[s.id]||{},inP=s.cat&&(wk.plan||{})[s.cat]===s.id,mine=inP?(wk.by||{})[s.cat]:null,go=inP&&isObj((wk.go||{})[s.id])?wk.go[s.id]:null;
+  return PEOPLE.map(p=>{const a=+availOf(p).a[s.day*NB+s.band]||0;const pr=prefOf(p,s.course),own=!go&&mine===p;
+    return {p,a,pr,own,go:!!go,out:!!out[p],ok:go?!!go[p]&&!out[p]:(own||(a>0&&pr>0))&&!out[p]}})}
 /* Places qu'il faut encore trouver : celles qui peuvent venir et n'ont pas déjà réservé. */
 function needOf(s,w){const bk=(week().booked||{})[s.id]||{};return w.filter(x=>x.ok&&!bk[x.p]).length}
 function shortOf(s,w){const pl=placesOf(s.id),need=needOf(s,w);return pl!==null&&need>0&&pl<need}
@@ -624,7 +625,7 @@ function renderDlg(){
     <p class="meta">${courseTag(s.course)} ${isGym?'':`<b class="club">${CLUBS[s.club]}</b> · `}${isGym?`<b class="club">${CLUBS[s.club]}</b> · accès libre`:esc(s.coach)}${s.dur?' · '+s.dur+' min':''}${s.max?' · '+s.max+' places':''}</p>
     ${past?`<div class="lbl">Cours passé · réinscrite pour la semaine suivante ?</div>`:''}
     <div class="people">${w.map(x=>`<div class="prow2">${av(x.p,x.ok?'on':'off')}<span class="pn">${esc(pname(x.p))}</span>
-      <span class="ps">${isGym?(x.ok?'vient':'ne vient pas'):solos.length&&!solos.some(o=>o.p===x.p)?'':x.out?'a laissé sa place':x.own&&!(x.a>0&&x.pr>0)?'l’a ajouté à la semaine':x.pr===0?'ne veut pas ce cours':x.a===0?'pas dispo':x.a===2?'créneau idéal':'possible'}${x.pr===2&&x.ok?' · adore':''}</span>
+      <span class="ps">${isGym?(x.ok?'vient':'ne vient pas'):solos.length&&!solos.some(o=>o.p===x.p)?'':x.out?'a laissé sa place':x.go&&x.ok?'vient':x.own&&!(x.a>0&&x.pr>0)?'l’a ajouté à la semaine':x.pr===0?'ne veut pas ce cours':x.a===0?'pas dispo':x.a===2?'créneau idéal':'possible'}${x.pr===2&&x.ok?' · adore':''}</span>
       ${past?(was(x)?(()=>{const y=!!(((nextW.booked||{})[s.id]||{})[x.p]),n=!!(((nextW.rebookNo||{})[s.id]||{})[x.p]);
         return `<span class="seg sm" role="group" aria-label="${esc(pname(x.p))} réinscrite"><button data-act="rebook" data-w="${nextK}" data-id="${s.id}" data-p="${x.p}" data-v="1" aria-pressed="${y}">Oui</button><button data-act="rebook" data-w="${nextK}" data-id="${s.id}" data-p="${x.p}" data-v="0" aria-pressed="${n}">Non</button></span>`})():''):`
       ${x.out?`<button class="btn sm ghost" data-act="in" data-id="${s.id}" data-p="${x.p}">Remettre</button>`:''}
@@ -641,7 +642,7 @@ function renderDlg(){
     ${solos.map(o=>`<button class="btn ghost sm" data-act="unsolo" data-p="${o.p}" data-cat="${o.c}">Retirer le créneau de ${esc(pname(o.p))}</button>`).join('')}
     <div class="row between" ${isGym?'hidden':''}><span class="lbl">${b.st==='past'?'Cours passé':seen?'Places restantes vues dans l’appli':'Places visibles une fois le cours de la semaine d’avant terminé'}</span>${seen&&b.st!=='past'?placesCtl(s):''}</div>
     ${b.st==='soon'&&!isGym?`<div class="lbl">Inscriptions dès ${b.dOpen===1?'demain':esc(b.lbl)}</div>`:''}
-    ${inPlan&&!done?`${replaceLists(s.cat,s)}<button class="btn ghost sm" data-act="unplan" data-v="${s.cat}">Retirer de notre semaine</button>`:''}
+    ${inPlan&&!done?`${replaceLists(s.cat,s)}<button class="btn ghost sm" data-act="unplan" data-v="${s.cat}">${PEOPLE.some(p=>p!==ui.me&&w.some(x=>x.go&&x.ok&&x.p===p))&&w.some(x=>x.go&&x.ok&&x.p===ui.me)?'Me retirer de ce cours':'Retirer de la semaine'}</button>`:''}
     ${!inPlan&&s.cat&&!isGym&&!solos.length&&b.st!=='past'?(alts=>alts.length?`<div class="lbl">Autres cours ${CATLBL[s.cat]} à la même heure</div><div class="alts">${alts.map(x=>`<button class="alt" data-act="slot" data-id="${x.s.id}"><span class="aw"><b>${DAYS[x.s.day].slice(0,3)}. ${hhmm(x.s.time)}</b>${courseTag(x.s.course)}${clubNote(x.s)?'<span class="lbl">'+clubNote(x.s)+'</span>':''}</span>${avs(x.w)}</button>`).join('')}</div>`:'')(candidates().filter(x=>x.cat===s.cat&&x.day===s.day&&x.band===s.band&&x.id!==s.id).map(x=>({s:x,w:who(x)}))):''}
     ${isPinned(s)?`<button class="btn ghost sm" data-act="unpin" data-v="${s.cat}">Ne plus imposer ce cours</button>`:''}
     ${forMe?`<button class="btn" data-act="solo" data-p="${ui.me}" data-cat="${s.cat}" data-id="${s.id}">Retenir pour ${esc(pname(ui.me))}</button>`:''}
@@ -670,7 +671,7 @@ document.addEventListener('click',e=>{
         (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(L):Promise.reject()).then(()=>toast('Lien copié. Envoie-le à Coco et Clem.'),()=>toast('Copie impossible : copie l’adresse de la page à la main.'));renderTop();return}
       if(ui.arm!==k){ui.arm=k;render();return}
       ui.arm=null;ui.menu=false;
-      if(k==='week'){save(weekPath(),{by:null,plan:null,solo:null,out:null,places:null,booked:null,gym:null,pins:null,lieu:null,rebookNo:null,invites:null});toast('Semaine du '+dayLabel(ui.week,0)+' réinitialisée.')}
+      if(k==='week'){save(weekPath(),{go:null,by:null,plan:null,solo:null,out:null,places:null,booked:null,gym:null,pins:null,lieu:null,rebookNo:null,invites:null});toast('Semaine du '+dayLabel(ui.week,0)+' réinitialisée.')}
       else if(k==='mine'){const p=resetWho();save('profiles/'+p,{avail:null,modes:null,prefs:null});save(weekPath(),{avail:{[p]:null},confirmed:{[p]:null},prefs:{[p]:null}});toast('Dispos de '+pname(p)+' réinitialisées.')}
       render();return}
     if(ui.arm){ui.arm=null}
@@ -696,9 +697,11 @@ document.addEventListener('click',e=>{
   else if(a==='slot'){ui.rf=null;ui.rfOpen=null;dlgSlot=el.dataset.id;dlgCat=null;openDlg();return}
   else if(a==='pin'){const sl=slotById(el.dataset.id),p=week().plan||{};
     /* Un cours choisi à la main va directement dans la semaine. Un seul cours par jour : il remplace celui du même jour. */
-    const patch={plan:{[sl.cat]:sl.id},by:{[sl.cat]:ui.me||null},pins:{[sl.cat]:null}};
+    const patch={plan:{[sl.cat]:sl.id},by:{[sl.cat]:ui.me||null},pins:{[sl.cat]:null}};if(ui.me)patch.go={[sl.id]:{[ui.me]:true}};
     CATS.forEach(([c])=>{const x=c!==sl.cat&&p[c]&&slotById(p[c]);if(x&&x.day===sl.day){patch.plan[c]=null;patch.by[c]=null;patch.pins[c]=null}});
-    save(weekPath(),patch);closeDlg();ui.tab='semaine';toast(sl.course+' de '+DAYS[sl.day].toLowerCase()+' ajouté à votre semaine.')}
+    save(weekPath(),patch);ui.tab='semaine';
+    if(ui.me){dlgPick=null;dlgCat=null;ui.rf=null;ui.rfOpen=null;dlgSlot=sl.id;render();openDlg();toast('Ajouté à ta semaine. Tu peux inviter les autres.');return}
+    closeDlg();toast(sl.course+' de '+DAYS[sl.day].toLowerCase()+' ajouté à votre semaine.')}
   else if(a==='place'){save(weekPath(),{lieu:{[el.dataset.d+'-'+el.dataset.b]:v||null}})}
   else if(a==='resetcell'){const d=+el.dataset.d,patch={pins:{},lieu:{}},pins=week().pins||{};CATS.forEach(([c])=>{const x=pins[c]&&slotById(pins[c]);if(x&&x.day===d)patch.pins[c]=null});
     for(let b=0;b<NB;b++)patch.lieu[d+'-'+b]=null;save(weekPath(),patch);closeDlg();toast('C’est remis à zéro pour ce jour.')}
@@ -716,7 +719,7 @@ document.addEventListener('click',e=>{
     save(weekPath(),{invites:{[d.id]:{from:ui.me,to:{[d.p]:cur[d.p]==='ask'?null:'ask'}}}});if(cur[d.p]!=='ask')toast(pname(d.p)+' est invitée : elle le verra en ouvrant la page.')}
   else if(a==='invyes'){const d=el.dataset,sl=slotById(d.id),patch={invites:{[d.id]:{to:{[d.p]:'yes'}}}};
     if(sl.gym){const key=sl.id.slice(4),cur=gymPart(key)||{},o={};PEOPLE.forEach(q=>o[q]=q===d.p?true:!!cur[q]);patch.gym={[key]:o}}
-    else if((week().plan||{})[sl.cat]===sl.id)patch.out={[sl.id]:{[d.p]:null}};else patch.solo={[d.p]:{[sl.cat]:sl.id}};
+    else if((week().plan||{})[sl.cat]===sl.id){patch.out={[sl.id]:{[d.p]:null}};if(isObj((week().go||{})[sl.id]))patch.go={[sl.id]:{[d.p]:true}}}else patch.solo={[d.p]:{[sl.cat]:sl.id}};
     save(weekPath(),patch);toast('C’est noté : '+sl.course+' de '+DAYS[sl.day].toLowerCase()+'.')}
   else if(a==='invno'){const d=el.dataset;save(weekPath(),{invites:{[d.id]:{to:{[d.p]:'no'}}}})}
   else if(a==='toggleopts'){save(weekPath(),{hideOpts:week().hideOpts?null:true})}
@@ -732,7 +735,10 @@ document.addEventListener('click',e=>{
     else{save(weekPath(),{gym:{[key]:null},booked:{[id]:null}});closeDlg()}}
   else if(a==='gymdel'){const id=el.dataset.id;save(weekPath(),{gym:{[id.slice(4)]:null},booked:{[id]:null}});closeDlg()}
   else if(a==='pickcat'){dlgCat=v;dlgSlot=null;openDlg();return}
-  else if(a==='unplan'){save(weekPath(),{plan:{[v]:null},pins:{[v]:null},by:{[v]:null}});closeDlg()}
+  else if(a==='unplan'){const id=(week().plan||{})[v],go=id&&(week().go||{})[id];
+    if(isObj(go)&&ui.me&&go[ui.me]&&PEOPLE.some(p=>p!==ui.me&&go[p]))save(weekPath(),{go:{[id]:{[ui.me]:null}},booked:{[id]:{[ui.me]:null}}});
+    else{const patch={plan:{[v]:null},pins:{[v]:null},by:{[v]:null}};if(id)patch.go={[id]:null};save(weekPath(),patch)}
+    closeDlg()}
   else if(a==='rebook'){const d=el.dataset,yes=d.v==='1',on=el.getAttribute&&el.getAttribute('aria-pressed')==='true';
     const patch={booked:{[d.id]:{[d.p]:yes&&!on?true:null}},rebookNo:{[d.id]:{[d.p]:!yes&&!on?true:null}}};
     if(d.id.startsWith('gym_')){const src=(week().gym||{})[d.id.slice(4)];patch.gym={[d.id.slice(4)]:{[d.p]:yes&&!on,club:isObj(src)&&src.club||'auteuil'}}}
@@ -744,9 +750,11 @@ document.addEventListener('click',e=>{
   else if(a==='setplan'&&(()=>{const c=el.dataset.cat,rm=el.dataset.rm,d=slotById(el.dataset.id).day,p=week().plan||{};
       return CATS.some(([k])=>k!==c&&k!==rm&&p[k]&&slotById(p[k])&&slotById(p[k]).day===d)})()){toast('Vous avez déjà un cours ce jour-là : un seul cours par jour.');return}
   else if(a==='setplan'){const c=el.dataset.cat,rm=el.dataset.rm,patch={plan:{[c]:el.dataset.id},by:{[c]:ui.me||null}};
+    if(ui.me)patch.go={[el.dataset.id]:{[ui.me]:true}};
     if(rm&&rm!==c){patch.plan[rm]=null;patch.by[rm]=null;patch.pins={[rm]:null}}
-    save(weekPath(),patch);if(dlgSlot||dlgCat){closeDlg();toast('Ajouté à votre semaine.')}}
-  else if(a==='clearplan'){save(weekPath(),{plan:null,solo:null,out:null,by:null});ui.swap=null}
+    save(weekPath(),patch);if(ui.me){dlgCat=null;dlgPick=null;ui.rf=null;ui.rfOpen=null;dlgSlot=el.dataset.id;render();openDlg();toast('Ajouté à ta semaine. Tu peux inviter les autres.');return}
+    if(dlgSlot||dlgCat){closeDlg();toast('Ajouté à votre semaine.')}}
+  else if(a==='clearplan'){save(weekPath(),{plan:null,solo:null,out:null,by:null,go:null});ui.swap=null}
   else if(a==='confirm'){const cur=(week().confirmed||{})[ui.edit];save(weekPath(),{confirmed:{[ui.edit]:cur?null:true}});if(!cur)toast('Dispos validées.')}
   else if(a==='resetweek'){save(weekPath(),{avail:{[ui.edit]:null}})}
   else if(a==='typesave'){if(dlgType){const d=dlgType;saveAvail(d.p,d.a,d.m,true);closeDlg();toast('Semaine type de '+pname(d.p)+' enregistrée.')}}
