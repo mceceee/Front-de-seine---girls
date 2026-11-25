@@ -106,6 +106,9 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke
 .week7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:var(--fill);border-radius:24px;overflow:hidden}
 .day{min-width:0;display:flex;flex-direction:column;gap:8px;padding:12px 8px 10px;border-left:1px solid var(--line)}
 .day:first-child{border-left:0}
+.dayadd{flex:1;min-height:132px;width:100%;border:1.5px dashed transparent;border-radius:16px;background:none;color:transparent;font-size:28px;font-weight:300;line-height:1;display:flex;align-items:center;justify-content:center}
+.dayadd:hover,.dayadd:focus-visible{border-color:rgba(255,255,255,.38);background:rgba(255,255,255,.07);color:var(--fg)}
+.dayadd:active{background:rgba(255,255,255,.13)}
 .cards{display:flex;flex-direction:column;gap:8px;min-width:0}
 .chipsrow{display:flex;flex-wrap:wrap;gap:5px}
 .chipbtn{border:0;background:var(--fill2);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;color:var(--t2);font-variant-numeric:tabular-nums}
@@ -249,6 +252,8 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
   .two{grid-template-columns:minmax(0,1fr)}
   .week7{grid-template-columns:minmax(0,1fr)}
   .week7:not(.list) .day.rest{display:none}
+  .week7.pickable .day.rest{display:grid}
+  .week7.pickable .dayadd{min-height:46px;font-size:22px;border-color:var(--line);color:var(--t3)}
   .week7:not(.list) .day{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px;align-items:center;border-left:0;padding:8px 10px 8px 6px}
   .week7:not(.list) .day+.day.has{border-top:1px solid var(--line)}
   .week7:not(.list) .dh{flex-direction:column;gap:1px;padding:0;align-items:center;justify-content:center;font-size:21px;font-weight:700;line-height:1.05;color:var(--fg);letter-spacing:-.02em}
@@ -282,7 +287,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
   .week7:not(.list) .sess .avs,.week7:not(.list) .sess .keep{grid-column:3;grid-row:1;justify-self:end;margin:0}
   .week7:not(.list) .sess .ss,.week7:not(.list) .sess .pl{grid-column:3;justify-self:end}
 }
-@media (prefers-reduced-motion:no-preference){ .sess,.slot,.cell,.btn,.rail button,.whobtn,.seg button,.alt{transition:background-color .15s,color .15s} }
+@media (prefers-reduced-motion:no-preference){ .sess,.slot,.cell,.btn,.rail button,.whobtn,.seg button,.alt,.dayadd{transition:border-color .15s,background-color .15s,color .15s} }
 </style>
 
 <div class="shell">
@@ -649,9 +654,10 @@ function strip(pick,opts){const byDay={},add=(d,c,r)=>(byDay[d]=byDay[d]||[]).pu
   Object.values(grp).forEach(g=>{if(me&&!g.ps.includes(me))return;
     add(g.s.day,g.c,{s:g.s,w:PEOPLE.map(p=>({p,a:1,pr:1,ok:g.ps.includes(p),solo:true})),n:g.ps.length,label:g.ps.map(pname).join(' + ')+' · '+CATLBL[g.c]})});
   opts=Object.assign({pick},opts||{});
-  let h=`<div class="week7">`;
+  const canAdd=!!opts.booked;
+  let h=`<div class="week7 ${canAdd?'pickable':''}">`;
   for(let d=0;d<7;d++){const e=(byDay[d]||[]).sort((x,y)=>x[1].s.min-y[1].s.min);
-    h+=`<div class="day ${e.length?'has':'rest'}" data-d="${d}"><div class="dh"><b>${DAYS[d].slice(0,3)}</b>${keyDate(ui.week,d).getDate()}</div>${e.length?`<div class="cards">${e.map(x=>sessionCard(x[0],x[1],opts||{})).join('')}</div>`:''}</div>`}
+    h+=`<div class="day ${e.length?'has':'rest'}" data-d="${d}"><div class="dh"><b>${DAYS[d].slice(0,3)}</b>${keyDate(ui.week,d).getDate()}</div>${e.length?`<div class="cards">${e.map(x=>sessionCard(x[0],x[1],opts||{})).join('')}</div>`:canAdd?`<button class="dayadd" data-act="daypick" data-v="${d}" aria-label="Choisir un cours ${DAYS[d].toLowerCase()}"><span>+</span></button>`:''}</div>`}
   return h+`</div>`}
 
 function confirmBanner(){const c=confirmInfo(),miss=PEOPLE.filter(p=>!c.conf[p]);
@@ -705,7 +711,7 @@ function renderSemaine(){
       <button class="btn ghost sm" data-act="gymadd">Ajouter une séance de salle</button></div>
     ${(f=>f?`<div class="rbs todo">${f}</div>`:'')(checkRows(st.pick))}
     ${(f=>f?`<div class="rbs fix">${f}</div>`:'')(fixRows(st.pick))}
-    ${total||gyms.length||soloList().length?strip(st.pick,{booked:true,gyms,solos:soloList(),me:ui.me}):`<p class="none">Rien de validé pour l’instant.</p>`}
+    ${strip(st.pick,{booked:true,gyms,solos:soloList(),me:ui.me})}
     ${total?`<div class="ft"><span>${esc(nextDeadline(wk.plan||{},wk))}</span></div>`:''}</section>`;
   const off=offPlanRows();
   if(off)h+=`<section class="blk"><div class="hd"><h2>Réservations de sécurité</h2><span class="sub">Hors plan : à garder ou à annuler dans l’appli</span></div><div class="alts">${off}</div></section>`;
@@ -796,7 +802,7 @@ function availGrid(p,type,dis){const av_=type?(dlgType&&dlgType.p===p?dlgType:ty
       h+=`<td><button class="cell v${v} ${l?'lieu':''}" data-lieu="${l==='beaugrenelle'?'B':l?'A':''}" data-act="cell"${t} data-d="${d}" data-b="${b}" ${dis} aria-label="${DAYS[d]} ${BANDS[b]} : ${['non','possible','idéal'][v]}">${v===2?'★':''}</button></td>`}
     h+=`</tr>`}
   return h+`</tbody></table></div>
-      <span class="legend"><span><i class="sw"></i>Non</span><span><i class="sw v1"></i>Possible</span><span><i class="sw v2"></i>Idéal</span>${type?'':'<span>Clic droit ou appui long : lieu ou cours précis</span>'}</span>`}
+      <span class="legend"><span><i class="sw"></i>Non</span><span><i class="sw v1"></i>Possible</span><span><i class="sw v2"></i>Idéal</span>${type?'':'<span>Clic droit ou appui long sur une case : lieu ou cours précis</span>'}</span>`}
 function renderDispos(){
   const p=ui.edit,weekCustom=availOf(p).custom,conf=!!(week().confirmed||{})[p];
   const dis=Store.ready&&!Store.readonly?'':'disabled';
@@ -864,7 +870,7 @@ function renderDlg(){
     const list=c=>clubSlots(c).filter(x=>x.day===d&&x.band===b&&x.cat).map(x=>`<button class="alt ${isPinned(x)?'cur':''}" data-act="pin" data-id="${x.id}"><span class="aw"><b>${hhmm(x.time)}</b>${courseTag(x.course)}</span><span class="lbl">${esc(x.coach.split(' · ')[0])}</span></button>`).join('');
     const A=list('auteuil'),B=list('beaugrenelle'),X=WEEKDATA[ui.week]?list('inconnu'):'';
     box.innerHTML=`<div class="dlg"><div class="dh2"><div><h3>${DAYS[d]} ${keyDate(ui.week,d).getDate()}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
-      <div class="chipsrow">${(bs=>BANDS.map((t,i)=>`<button class="chipbtn" data-act="pickband" data-v="${i}" aria-pressed="${i===b}" ${bs.has(i)?'':'disabled'}>${t}</button>`).join(''))(bandsWith(d))}</div>
+      <div class="chipsrow">${(bs=>BANDS.map((t,i)=>`<button class="chipbtn" data-act="pickband" data-v="${i}" aria-pressed="${i===b}" ${bs.has(i)?'':'disabled'}>${t.split(' ')[0]}</button>`).join(''))(bandsWith(d))}</div>
       <div class="row between"><span class="lbl">Lieu</span><span class="seg sm" role="group" aria-label="Lieu">${[['','Les deux'],['auteuil','Auteuil'],['beaugrenelle','Beaugrenelle']].map(([k,l])=>`<button data-act="place" data-d="${d}" data-b="${b}" data-v="${k}" aria-pressed="${(lieuAt(d,b)||'')===k}">${l}</button>`).join('')}</span></div>
       <div class="lbl">Ou un cours précis</div>
       ${A?`<div class="lbl">Auteuil</div><div class="alts">${A}</div>`:''}${B?`<div class="lbl">Beaugrenelle</div><div class="alts">${B}</div>`:''}${X?`<div class="lbl">Club à voir sur l’appli FDS</div><div class="alts">${X}</div>`:''}${A||B||X?'':'<p class="none">Aucun cours sur ce créneau.</p>'}
@@ -951,6 +957,7 @@ document.addEventListener('click',e=>{
     save(weekPath(),patch);closeDlg();toast('Créneau réinitialisé.')}
   else if(a==='asklater'){try{localStorage.setItem('fds:html:'+v,fmtKey(today0()))}catch(x){}closeDlg();return}
   else if(a==='askdone'){try{localStorage.setItem('fds:html:'+v,'done')}catch(x){}closeDlg();toast('Merci ! Claude met le planning à jour.');return}
+  else if(a==='daypick'){pickFrom({d:+v,b:dayBand(+v)});return}
   else if(a==='pickband'){if(dlgPick)dlgPick.b=+v;renderDlg();return}
   else if(a==='unpin'){save(weekPath(),{pins:{[v]:null}});closeDlg()}
   else if(a==='solo'){const d=el.dataset;save(weekPath(),{solo:{[d.p]:{[d.cat]:d.id}}});if(dlgSlot)closeDlg();toast('Créneau retenu pour '+pname(d.p)+'. Touche-le pour l’annuler.')}
@@ -1002,10 +1009,9 @@ document.addEventListener('click',e=>{
 let lpT=null,lpDone=false;
 /* Heures où il existe au moins un cours ce jour-là (tous clubs). */
 function bandsWith(d){const set=new Set();['auteuil','beaugrenelle','inconnu'].forEach(c=>clubSlots(c).forEach(x=>{if(x.day===d&&x.cat)set.add(x.band)}));return set}
+function dayBand(d){const bs=[...bandsWith(d)].sort((a,b)=>Math.abs(a-6)-Math.abs(b-6));return bs.length?bs[0]:6}
 function pickTarget(e){const t=e.target;if(!t.closest)return null;
   const c=t.closest('.cell');if(c)return c.dataset.t==='1'?null:{d:+c.dataset.d,b:+c.dataset.b};
-  const k=t.closest('.sess,.slot');if(k&&k.dataset.id){const sl=slotById(k.dataset.id);if(sl)return {d:sl.day,b:sl.band}}
-  const dy=t.closest('.day');if(dy&&dy.dataset.d!=null&&dy.dataset.d!==''){const d=+dy.dataset.d,bs=[...bandsWith(d)].sort((a,b)=>Math.abs(a-6)-Math.abs(b-6));return {d,b:bs.length?bs[0]:6}}
   return null}
 function pickFrom(p){dlgPick=p;dlgSlot=null;dlgCat=null;dlgGym=null;dlgType=null;openDlg()}
 document.addEventListener('contextmenu',e=>{const p=pickTarget(e);if(!p)return;e.preventDefault();pickFrom(p)});
