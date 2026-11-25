@@ -11,7 +11,7 @@
   --recess:rgba(0,0,0,.26); --line:rgba(255,255,255,.09);
   --sel:#fff; --on-sel:#17181c;
   --force:#ff8d62; --cardio:#6ab4ff; --mob:#62dfae;
-  --red:#ff6b6b; --green:#4cd98a; --amber:#ffc96b;
+  --invite:#c9a9ff; --red:#ff6b6b; --green:#4cd98a; --amber:#ffc96b;
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,"Helvetica Neue",Arial,sans-serif;
 }
 *{box-sizing:border-box}
@@ -70,7 +70,7 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke
   background:rgba(255,255,255,.92);color:#1a1b1f;border:1.5px solid transparent}
 .av.off{background:transparent;color:var(--t3);border:1.5px dashed rgba(255,255,255,.28)}
 .av.bk{background:var(--green);color:#06301c}
-.av.ask{background:transparent;color:var(--cardio);border:1.5px solid var(--cardio)}
+.av.ask{background:transparent;color:var(--invite);border:1.5px solid var(--invite)}
 .av.no{background:transparent;color:var(--red);border:1.5px solid var(--red);text-decoration:line-through}
 .av.free{background:transparent;color:var(--fg);border:1.5px solid rgba(255,255,255,.75)}
 .legend .av{width:14px;height:14px}
@@ -140,9 +140,10 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .sess{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;border-radius:16px;
   padding:11px 10px 11px 12px;background:rgba(255,255,255,.085);overflow:hidden;min-width:0}
 .sess:hover{background:rgba(255,255,255,.15)}
-.sess.inv{background:rgba(106,180,255,.16);box-shadow:inset 0 0 0 1.5px var(--cardio);cursor:default}
-.sess.inv:hover{background:rgba(106,180,255,.16)}
-.sess.inv .sc{color:var(--cardio)}
+.sess.inv,.sess.inv:hover{background:rgba(201,169,255,.24);box-shadow:inset 0 0 0 2px var(--invite);cursor:default}
+.sess.inv .sc{color:var(--invite);display:inline-flex;align-items:center;gap:5px}
+.sess.inv .sc svg{width:13px;height:13px;stroke-width:2.2}
+.sess.inv .btn:not(.ghost){background:var(--invite);color:#241640}
 .invbtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .sess.opt{background:transparent;border:1.5px dashed color-mix(in srgb,var(--cc) 55%,transparent)}
 .sess.opt:hover{background:rgba(255,255,255,.09);border-color:var(--cc)}
@@ -159,7 +160,7 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .sess.away:hover{opacity:.7}
 .sess.pb{box-shadow:inset 0 0 0 1.5px var(--red)}
 .rbs.invite{background:rgba(106,180,255,.14);box-shadow:inset 0 0 0 1px rgba(106,180,255,.6)}
-.notif{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--cardio);color:#06203a;font-size:10px;font-weight:700;font-style:normal}
+.notif{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--invite);color:#241640;font-size:10px;font-weight:700;font-style:normal}
 .rail button{position:relative}
 .rail .notif{position:absolute;top:8px;right:14px;min-width:9px;width:9px;height:9px;padding:0}
 .rbs.todo{background:rgba(255,201,107,.12);box-shadow:inset 0 0 0 1px rgba(255,201,107,.55)}
@@ -701,7 +702,7 @@ function isPinned(s){return s.cat&&(week().pins||{})[s.cat]===s.id}
 function sessionCard(c,r,opts){
   /* Plus rien à faire : toutes celles qui viennent ont réservé, ou moi dans ma vue. */
   const bk0=(week().booked||{})[r.s.id]||{},att0=r.w.filter(x=>x.ok),settled=(att0.length>0&&att0.every(x=>bk0[x.p]))||!!(opts.me&&bk0[opts.me]);const s=r.s,bk=(week().booked||{})[s.id]||null,done=opts.booked&&isDone(ui.week,s);
-  if(r.invite)return `<div class="sess inv c-${c}"><span class="sc">${esc(pname(r.invite))} t’invite</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
+  if(r.invite)return `<div class="sess inv c-${c}"><span class="sc"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16v11H4zM4 7l8 6 8-6"/></svg>${esc(pname(r.invite))} t’invite</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta">${esc(CLUBS[s.club])}</span>${avs(r.w,(week().booked||{})[s.id]||null)}
     <span class="invbtns"><button class="btn sm" data-act="invyes" data-id="${s.id}" data-p="${opts.me}">J’y vais</button><button class="btn ghost sm" data-act="invno" data-id="${s.id}" data-p="${opts.me}">Non merci</button></span></div>`;
   if(r.option)return `<button class="sess opt c-${c}" data-act="setplan" data-cat="${c}" data-id="${s.id}" aria-label="Ajouter ${esc(s.course)} ${DAYS[s.day].toLowerCase()} ${hhmm(s.time)}">

@@ -335,7 +335,7 @@ function isPinned(s){return s.cat&&(week().pins||{})[s.cat]===s.id}
 function sessionCard(c,r,opts){
   /* Plus rien à faire : toutes celles qui viennent ont réservé, ou moi dans ma vue. */
   const bk0=(week().booked||{})[r.s.id]||{},att0=r.w.filter(x=>x.ok),settled=(att0.length>0&&att0.every(x=>bk0[x.p]))||!!(opts.me&&bk0[opts.me]);const s=r.s,bk=(week().booked||{})[s.id]||null,done=opts.booked&&isDone(ui.week,s);
-  if(r.invite)return `<div class="sess inv c-${c}"><span class="sc">${esc(pname(r.invite))} t’invite</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
+  if(r.invite)return `<div class="sess inv c-${c}"><span class="sc"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16v11H4zM4 7l8 6 8-6"/></svg>${esc(pname(r.invite))} t’invite</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta">${esc(CLUBS[s.club])}</span>${avs(r.w,(week().booked||{})[s.id]||null)}
     <span class="invbtns"><button class="btn sm" data-act="invyes" data-id="${s.id}" data-p="${opts.me}">J’y vais</button><button class="btn ghost sm" data-act="invno" data-id="${s.id}" data-p="${opts.me}">Non merci</button></span></div>`;
   if(r.option)return `<button class="sess opt c-${c}" data-act="setplan" data-cat="${c}" data-id="${s.id}" aria-label="Ajouter ${esc(s.course)} ${DAYS[s.day].toLowerCase()} ${hhmm(s.time)}">
