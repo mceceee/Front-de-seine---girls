@@ -794,7 +794,7 @@ function strip(pick,opts){const byDay={},add=(d,c,r)=>(byDay[d]=byDay[d]||[]).pu
 
 function confirmBanner(){const c=confirmInfo(),miss=PEOPLE.filter(p=>!c.conf[p]);
   const who=`<span class="avs">${PEOPLE.map(p=>av(p,c.conf[p]?'bk':'ko',c.conf[p]?'✓':null)).join('')}</span>`;
-  if(c.all)return `<div class="confirm ok">${who}<div class="ct"><b>Dispos validées par toutes les trois</b><span>Vous pouvez retenir un plan.</span></div></div>`;
+  if(c.all)return '';  /* tout le monde a validé : plus rien à signaler */
   const names=esc(miss.map(pname).join(miss.length===2?' et ':', '));
   /* Moi, c'est fait : bandeau vert, seules les pastilles de celles qui manquent restent rouges. */
   if(ui.me&&c.conf[ui.me])return `<div class="confirm ok">${who}<div class="ct"><b>Tes dispos sont validées</b><span>Il manque ${names}</span></div></div>`;
