@@ -277,7 +277,7 @@ function renderTop(){
       ${(items=>items.length?`<span class="more"><button class="rnd" data-act="menu" aria-label="Autres actions" aria-expanded="${!!ui.menu}">⋯</button>${ui.menu?`<div class="menu" role="menu">
         ${items.map(([k,l])=>
           `<button class="menuitem ${ui.arm===k?'danger':''}" role="menuitem" data-act="arm" data-v="${k}" ${Store.ready&&!Store.readonly?'':'disabled'}>${ui.arm===k?'Confirmer : tout effacer':esc(l)}</button>`).join('')}</div>`:''}</span>`:'')(
-        ui.tab==='semaine'?(Store.link?[['link','Copier le lien pour Coco et Clem']]:[]).concat([['week','Réinitialiser la semaine du '+dayLabel(wk,0)]]):ui.tab==='dispos'?[['type',ui.scope==='type'?'Revenir à la semaine du '+dayLabel(wk,0):'Modifier la semaine type de '+pname(resetWho())],['mine','Réinitialiser les dispos de '+pname(resetWho())]]:[])}
+        ui.tab==='semaine'?(Store.link?[['link','Copier le lien pour Coco et Clem']]:[]).concat([['week','Réinitialiser la semaine du '+dayLabel(wk,0)]]):ui.tab==='dispos'?[['type','Modifier la semaine type de '+pname(resetWho())],['mine','Réinitialiser les dispos de '+pname(resetWho())]]:[])}
     </div>`}
 
 /* Une semaine sur 7 colonnes : les séances posées sur leur jour, les jours de repos laissés vides. */
@@ -467,23 +467,25 @@ function renderPlanning(){
     h+=`<div class="day ${ui.day===d?'cur':''}"><div class="dh"><b>${DAYS[d].slice(0,3)}</b>${keyDate(ui.week,d).getDate()}</div>${col||'<span class="none">Rien</span>'}</div>`}
   return h+`</div></section>`}
 
+/* La grille des dispos : celle de la semaine affichée (dans la page) ou la semaine type (dans sa fenêtre). */
+function availGrid(p,type,dis){const av_=type?typeAvail(p):availOf(p),t=type?' data-t="1"':'';
+  let h=`<div class="scroller"><table class="av-t"><thead><tr><th></th>${DAYS.map((d,i)=>`<th>${d.slice(0,3)}${type?'':`<span class="dn">${keyDate(ui.week,i).getDate()}</span>`}</th>`).join('')}</tr>
+        <tr><th></th>${DAYS.map((d,i)=>`<td><select id="${type?'t':''}mode${i}" data-act="mode"${t} data-d="${i}" aria-label="${d}" ${dis}>${Object.keys(MODES).map(k=>`<option value="${k}" ${av_.m[i]===k?'selected':''}>${MODES[k]}</option>`).join('')}</select></td>`).join('')}</tr></thead><tbody>`;
+  for(let b=0;b<NB;b++){h+=`<tr><th class="rowh">${BANDS[b]}</th>`;
+    for(let d=0;d<7;d++){const v=+av_.a[d*NB+b]||0,l=type?null:lieuAt(d,b);
+      h+=`<td><button class="cell v${v} ${l?'lieu':''}" data-lieu="${l==='beaugrenelle'?'B':l?'A':''}" data-act="cell"${t} data-d="${d}" data-b="${b}" ${dis} aria-label="${DAYS[d]} ${BANDS[b]} : ${['non','possible','idéal'][v]}">${v===2?'★':''}</button></td>`}
+    h+=`</tr>`}
+  return h+`</tbody></table></div>
+      <span class="legend"><span><i class="sw"></i>Non</span><span><i class="sw v1"></i>Possible</span><span><i class="sw v2"></i>Idéal</span>${type?'':'<span>Clic droit ou appui long : lieu ou cours précis</span>'}</span>`}
 function renderDispos(){
-  const p=ui.edit,av_=editAvail(p),weekCustom=availOf(p).custom,scopeWeek=ui.scope==='week',conf=!!(week().confirmed||{})[p];
+  const p=ui.edit,weekCustom=availOf(p).custom,conf=!!(week().confirmed||{})[p];
   const dis=Store.ready&&!Store.readonly?'':'disabled';
-  let h=`<section class="blk"><div class="hd"><h2>${scopeWeek?'Dispos de '+esc(pname(p)):'Semaine type de '+esc(pname(p))}</h2></div>
-    ${!scopeWeek?'':(c=>conf?`<div class="confirm ok"><span class="avs">${av(p,'bk','✓')}</span><div class="ct"><b>Dispos validées</b><span>Semaine du ${esc(dayLabel(ui.week,0))}</span></div><button class="btn ghost sm" data-act="confirm" ${dis}>Annuler</button></div>`
+  let h=`<section class="blk"><div class="hd"><h2>Dispos de ${esc(pname(p))}</h2></div>
+    ${(c=>conf?`<div class="confirm ok"><span class="avs">${av(p,'bk','✓')}</span><div class="ct"><b>Dispos validées</b><span>Semaine du ${esc(dayLabel(ui.week,0))}</span></div><button class="btn ghost sm" data-act="confirm" ${dis}>Annuler</button></div>`
       :`<div class="confirm ko"><span class="avs">${av(p,'off')}</span><div class="ct"><b>Dispos à valider</b><span>Semaine du ${esc(dayLabel(ui.week,0))} · ${c.left>1?'avant '+esc(longDate(c.deadline)).replace(/\.$/,'')+' soir':c.left===1?'avant demain soir':c.left===0?'ce soir au plus tard':'les inscriptions sont déjà ouvertes'}</span></div><button class="btn" data-act="confirm" ${dis}>Valider mes dispos</button></div>`)(confirmInfo())}
     <div class="two"><div class="col">
-      ${scopeWeek?(weekCustom?`<div class="row"><span class="lbl">Semaine modifiée par rapport à ta semaine type</span><button class="btn ghost sm" data-act="resetweek" ${dis}>Revenir à la semaine type</button></div>`:'')
-        :`<div class="row between"><span class="lbl">Ta semaine type sert de point de départ à chaque nouvelle semaine.</span><button class="btn sm" data-act="scope" data-v="week">Terminé</button></div>`}
-      <div class="scroller"><table class="av-t"><thead><tr><th></th>${DAYS.map((d,i)=>`<th>${d.slice(0,3)}${scopeWeek?`<span class="dn">${keyDate(ui.week,i).getDate()}</span>`:''}</th>`).join('')}</tr>
-        <tr><th></th>${DAYS.map((d,i)=>`<td><select id="mode${i}" data-act="mode" data-d="${i}" aria-label="${d}" ${dis}>${Object.keys(MODES).map(k=>`<option value="${k}" ${av_.m[i]===k?'selected':''}>${MODES[k]}</option>`).join('')}</select></td>`).join('')}</tr></thead><tbody>`;
-  for(let b=0;b<NB;b++){h+=`<tr><th class="rowh">${BANDS[b]}</th>`;
-    for(let d=0;d<7;d++){const v=+av_.a[d*NB+b]||0;
-      h+=`<td><button class="cell v${v} ${lieuAt(d,b)?'lieu':''}" data-lieu="${lieuAt(d,b)==='beaugrenelle'?'B':lieuAt(d,b)?'A':''}" data-act="cell" data-d="${d}" data-b="${b}" ${dis} aria-label="${DAYS[d]} ${BANDS[b]} : ${['non','possible','idéal'][v]}">${v===2?'★':''}</button></td>`}
-    h+=`</tr>`}
-  h+=`</tbody></table></div>
-      <span class="legend"><span><i class="sw"></i>Non</span><span><i class="sw v1"></i>Possible</span><span><i class="sw v2"></i>Idéal</span><span>Clic droit ou appui long : lieu ou cours précis</span></span>
+      ${weekCustom?`<div class="row"><span class="lbl">Semaine modifiée par rapport à ta semaine type</span><button class="btn ghost sm" data-act="resetweek" ${dis}>Revenir à la semaine type</button></div>`:''}
+      ${availGrid(p,false,dis)}
     </div><div class="col"><h3>Envies</h3>`;
   const courses=[...new Set(slots().map(s=>s.course))];
   CATS.forEach(([c,l])=>{h+=`<div class="prefgroup"><h4 class="c-${c}">${l}</h4><div class="prefs">`+
@@ -508,11 +510,15 @@ function render(){
   const sel=keep==='nameInput'?[document.activeElement.selectionStart,document.activeElement.selectionEnd,document.activeElement.value]:null;
   document.getElementById('app').innerHTML=ui.tab==='planning'?renderPlanning():ui.tab==='dispos'?renderDispos():ui.tab==='idees'?renderIdees():renderSemaine();
   if(keep){const el=document.getElementById(keep);if(el){if(sel){el.value=sel[2];}el.focus();if(sel)try{el.setSelectionRange(sel[0],sel[1])}catch(e){}}}
-  if(dlgSlot||dlgCat||dlgPick||dlgGym)renderDlg()}
+  if(dlgSlot||dlgCat||dlgPick||dlgGym||dlgType)renderDlg()}
 
-let dlgSlot=null,dlgCat=null,dlgPick=null,dlgGym=null;
+let dlgSlot=null,dlgCat=null,dlgPick=null,dlgGym=null,dlgType=null;
 function renderDlg(){
   const box=document.getElementById('dlg');
+  box.classList&&box.classList.toggle('wide',!!dlgType);
+  if(dlgType){const p=dlgType;
+    box.innerHTML=`<div class="dlg"><div class="dh2"><div><h3>Semaine type de ${esc(pname(p))}</h3><span class="lbl">Le point de départ de chaque nouvelle semaine</span></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
+      ${availGrid(p,true,Store.ready&&!Store.readonly?'':'disabled')}</div>`;return}
   if(dlgGym){const g=dlgGym;
     box.innerHTML=`<div class="dlg"><div class="dh2"><h3>Séance de salle</h3><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
       <div class="lbl">Jour</div><div class="chipsrow">${DAYS.map((d,i)=>`<button class="chipbtn" data-act="gymday" data-v="${i}" aria-pressed="${g.d===i}">${d.slice(0,3)} ${keyDate(ui.week,i).getDate()}</button>`).join('')}</div>
@@ -557,21 +563,21 @@ function renderDlg(){
     ${forMe?`<button class="btn" data-act="solo" data-p="${ui.me}" data-cat="${s.cat}" data-id="${s.id}">Retenir pour ${esc(pname(ui.me))}</button>`:''}
     ${inPlan||forMe?'':s.cat?`<button class="btn" data-act="setplan" data-cat="${s.cat}" data-id="${s.id}">Mettre dans notre semaine</button>`:''}</div>`}
 function openDlg(){renderDlg();const d=document.getElementById('dlg');if(!d.open)d.showModal()}
-function closeDlg(){dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;const d=document.getElementById('dlg');if(d.open)d.close()}
-document.getElementById('dlg').addEventListener('close',()=>{dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null});
+function closeDlg(){dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;const d=document.getElementById('dlg');if(d.open)d.close()}
+document.getElementById('dlg').addEventListener('close',()=>{dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null});
 document.getElementById('dlg').addEventListener('click',e=>{if(e.target&&e.target.id==='dlg')closeDlg()});
 
 let toastT;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},3800)}
 function save(path,patch){if(!Store.write(path,patch))toast(Store.readonly?'Lecture seule : rien n’a été modifié.':'Encore un instant, les données se chargent.')}
-function saveAvail(p,a,m){
-  if(ui.scope==='week')save(weekPath(),{avail:{[p]:{a,m}}});
+function saveAvail(p,a,m,type){
+  if(!type)save(weekPath(),{avail:{[p]:{a,m}}});
   else save('profiles/'+p,{avail:a,modes:m})}
 
 document.addEventListener('click',e=>{
   if(lpDone){lpDone=false;return}
   {const b=e.target.closest('[data-act="arm"]');
     if(b&&b.dataset.act==='arm'){const k=b.dataset.v;
-      if(k==='type'){ui.menu=false;ui.arm=null;ui.scope=ui.scope==='type'?'week':'type';render();return}
+      if(k==='type'){ui.menu=false;ui.arm=null;dlgType=resetWho();dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;renderTop();openDlg();return}
       if(k==='link'){ui.menu=false;ui.arm=null;const L=Store.link;
         (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(L):Promise.reject()).then(()=>toast('Lien copié. Envoie-le à Coco et Clem.'),()=>toast('Copie impossible : copie l’adresse de la page à la main.'));renderTop();return}
       if(ui.arm!==k){ui.arm=k;render();return}
@@ -637,21 +643,21 @@ document.addEventListener('click',e=>{
   else if(a==='clearplan'){save(weekPath(),{plan:null,solo:null,out:null});ui.swap=null}
   else if(a==='confirm'){const cur=(week().confirmed||{})[ui.edit];save(weekPath(),{confirmed:{[ui.edit]:cur?null:true}});if(!cur)toast('Dispos validées.')}
   else if(a==='resetweek'){save(weekPath(),{avail:{[ui.edit]:null}})}
-  else if(a==='cell'){const p=ui.edit,av=editAvail(p),i=+el.dataset.d*NB+ +el.dataset.b;const nv=((+av.a[i]||0)+1)%3;
-    saveAvail(p,av.a.slice(0,i)+nv+av.a.slice(i+1),av.m)}
+  else if(a==='cell'){const type=el.dataset.t==='1',p=type&&dlgType?dlgType:ui.edit,av=type?typeAvail(p):availOf(p),i=+el.dataset.d*NB+ +el.dataset.b;const nv=((+av.a[i]||0)+1)%3;
+    saveAvail(p,av.a.slice(0,i)+nv+av.a.slice(i+1),av.m,type)}
   else if(a==='pref'){const p=ui.edit;save('profiles/'+p,{prefs:{[el.dataset.c]:+v}})}
   else return;
   render()});
 /* Clic droit (ordinateur) ou appui long (téléphone) sur une case : choisir un cours précis à cette heure. */
 let lpT=null,lpDone=false;
 function pickFrom(el){dlgPick={d:+el.dataset.d,b:+el.dataset.b};dlgSlot=null;dlgCat=null;openDlg()}
-document.addEventListener('contextmenu',e=>{const el=e.target.closest&&e.target.closest('.cell');if(!el)return;e.preventDefault();pickFrom(el)});
-document.addEventListener('pointerdown',e=>{const el=e.target.closest&&e.target.closest('.cell');if(!el||e.pointerType==='mouse')return;
+document.addEventListener('contextmenu',e=>{const el=e.target.closest&&e.target.closest('.cell');if(!el||el.dataset.t==='1')return;e.preventDefault();pickFrom(el)});
+document.addEventListener('pointerdown',e=>{const el=e.target.closest&&e.target.closest('.cell');if(!el||el.dataset.t==='1'||e.pointerType==='mouse')return;
   lpDone=false;clearTimeout(lpT);lpT=setTimeout(()=>{lpDone=true;pickFrom(el)},550)});
 ['pointerup','pointercancel','pointermove'].forEach(t=>document.addEventListener(t,e=>{if(t!=='pointermove'||Math.abs(e.movementX)+Math.abs(e.movementY)>6)clearTimeout(lpT)}));
 document.addEventListener('change',e=>{const el=e.target;const a=el.dataset&&el.dataset.act;
-  if(a==='mode'){const p=ui.edit,av=editAvail(p),d=+el.dataset.d,k=el.value;
-    saveAvail(p,av.a.slice(0,d*NB)+PRESET[k]+av.a.slice((d+1)*NB),av.m.slice(0,d)+k+av.m.slice(d+1));render()}
+  if(a==='mode'){const type=el.dataset.t==='1',p=type&&dlgType?dlgType:ui.edit,av=type?typeAvail(p):availOf(p),d=+el.dataset.d,k=el.value;
+    saveAvail(p,av.a.slice(0,d*NB)+PRESET[k]+av.a.slice((d+1)*NB),av.m.slice(0,d)+k+av.m.slice(d+1),type);render()}
   else if(a==='together'){ui.together=el.checked;render()}
 });
 function fromHash(){try{const h=(location.hash||'').slice(1);if(TABS.some(t=>t[0]===h))ui.tab=h}catch(e){}}
