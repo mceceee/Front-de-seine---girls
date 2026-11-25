@@ -2,6 +2,8 @@
 const DATA=/*__DATA__*/{"auteuil":[],"beaugrenelle":[]}/*__ENDDATA__*/;
 const CATALOG=/*__CAT__*/{}/*__ENDCAT__*/;
 /* Hors de claude.ai (Vercel) : identifiants publics du projet Firebase, injectés par build.py depuis firebase-config.json. */
+/* Plannings relevés sur la page du club, semaine par semaine ; sinon c'est le planning du PDF (DATA). */
+const WEEKDATA=/*__WK__*/{}/*__ENDWK__*/;
 const FIREBASE_CONFIG=/*__FB__*/null/*__ENDFB__*/;
 
 /* ---------- Référentiels ---------- */
@@ -9,7 +11,7 @@ const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 const DAYKEYS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
 const CATS=[['force','Force'],['cardio','Cardio'],['mobilite','Mobilité']];
 /* Semaines (lundi, AAAA-MM-JJ) dont le planning a été mis à jour depuis la page du club. */
-const PLANNING_WEEKS=[];
+const PLANNING_WEEKS=Object.keys(WEEKDATA);
 const BOOK_AHEAD=6; /* inscriptions ouvertes 6 jours avant le cours */
 const CAT_OF={'SKILL':'force','WOD':'force','TRX FORCE':'force','TRX BENCH':'force','CORE':'force','HYROX':'force',
   'RPM':'cardio','SPRINT':'cardio','BOXING BAG':'cardio','TRX CROSS':'cardio','STRENGTH':'cardio','CEREMONY':'cardio',
@@ -133,20 +135,20 @@ const prefOf=(p,course)=>{const v=(profile(p).prefs||{})[course];return v===0||v
 
 /* ---------- Créneaux ---------- */
 const slotCache={};
-function clubSlots(c){if(slotCache[c])return slotCache[c];const seen={},pre=c==='auteuil'?'':'bg_';
-  const out=(DATA[c]||[]).map(r=>{const [studio,day,time,course,coach]=r;const [h,m]=time.split(':').map(Number);
+function clubSlots(c){const wd=WEEKDATA[ui.week],ck=c+'|'+(wd?ui.week:'');if(slotCache[ck])return slotCache[ck];const seen={},pre=c==='auteuil'?'':'bg_';
+  const out=((wd&&wd[c])||DATA[c]||[]).map(r=>{const [studio,day,time,course,coach]=r;const [h,m]=time.split(':').map(Number);
     let id=pre+day+'-'+time.replace(':','')+'-'+course.toLowerCase().normalize('NFD').replace(/[^a-z]/g,'');
     if(seen[id])id+='-'+(++seen[id]);else seen[id]=1;
     const meta=CATALOG[course]||{};
     return {id,club:c,studio,day,time,min:h*60+m,band:bandOf(h*60+m),course,coach,cat:CAT_OF[course]||null,dur:meta.dur||null,max:meta.max||null}});
   out.sort((a,b)=>a.day-b.day||a.min-b.min||a.course.localeCompare(b.course));
-  return slotCache[c]=out}
+  return slotCache[ck]=out}
 function slots(){return clubSlots('auteuil')}
 /* Par défaut on propose les deux clubs, Auteuil de préférence. Une case peut être limitée à un seul lieu. */
 const lieuAt=(d,b)=>{const v=(week().lieu||{})[d+'-'+b];return v==='auteuil'||v==='beaugrenelle'?v:null};
-let candCache=null;
-function candidates(){if(!candCache)candCache=clubSlots('auteuil').concat(clubSlots('beaugrenelle')).sort((a,b)=>a.day-b.day||a.min-b.min||a.course.localeCompare(b.course)||(a.club<b.club?-1:1));
-  const l=week().lieu||{};if(!Object.keys(l).length)return candCache;
+const candCacheW={};
+function candidates(){const ck=WEEKDATA[ui.week]?ui.week:'';if(!candCacheW[ck])candCacheW[ck]=clubSlots('auteuil').concat(clubSlots('beaugrenelle')).sort((a,b)=>a.day-b.day||a.min-b.min||a.course.localeCompare(b.course)||(a.club<b.club?-1:1));
+  const candCache=candCacheW[ck],l=week().lieu||{};if(!Object.keys(l).length)return candCache;
   return candCache.filter(s=>{const v=lieuAt(s.day,s.band);return !v||v===s.club})}
 const GYM_TIMES=['07:00','08:15','09:30','10:45','12:00','12:30','13:15','14:45','16:00','17:15','18:30','19:45','21:00'];
 function gymSlot(id){const m=/^gym_(\d)-(\d{2})(\d{2})$/.exec(id);if(!m)return null;const mn=+m[2]*60+ +m[3];

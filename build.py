@@ -17,6 +17,9 @@ js=lambda o: json.dumps(o,ensure_ascii=False,separators=(',',':')).replace('<','
 html=open(os.path.join(root,'head.html'),encoding='utf-8').read()+open(os.path.join(root,'script.html'),encoding='utf-8').read()
 html=re.sub(r'/\*__DATA__\*/.*?/\*__ENDDATA__\*/',lambda m:js(data),html,flags=re.S)
 html=re.sub(r'/\*__CAT__\*/.*?/\*__ENDCAT__\*/',lambda m:js(cat),html,flags=re.S)
+wkp=os.path.join(root,'data','weeks.json')
+wk=js(json.load(open(wkp,encoding='utf-8'))) if os.path.exists(wkp) else '{}'
+html=re.sub(r'/\*__WK__\*/.*?/\*__ENDWK__\*/',lambda m:wk,html,flags=re.S)
 # Identifiants publics Firebase (facultatif) : sans ce fichier, la page reste en mode local hors de claude.ai.
 fbp=os.path.join(root,'firebase-config.json')
 fb=js(json.load(open(fbp,encoding='utf-8'))) if os.path.exists(fbp) else 'null'
