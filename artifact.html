@@ -144,6 +144,9 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .sess.sug{background:transparent;border:1.5px dashed rgba(255,255,255,.35)}
 .keep{display:inline-block;white-space:nowrap;margin:7px 0 4px;background:var(--sel);color:var(--on-sel);font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px}
 .sess.sug:hover{background:rgba(255,255,255,.08)}
+.sess.done{opacity:.45}
+.sess.done:hover{opacity:.8}
+.day.past .dh{opacity:.45}
 .sess.away{opacity:.42}
 .sess.away:hover{opacity:.7}
 .sess.pb{box-shadow:inset 0 0 0 1.5px var(--red)}
@@ -304,6 +307,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
   .week7{grid-template-columns:minmax(0,1fr)}
   .week7:not(.list) .day.rest{display:none}
   .week7.pickable .day.rest{display:grid}
+  .week7.pickable .day.rest.past{display:none}
   .week7.pickable .dayadd{min-height:46px;font-size:22px;border-color:var(--line);color:var(--t3)}
   .week7:not(.list) .day{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px;align-items:center;border-left:0;padding:8px 10px 8px 6px}
   .week7:not(.list) .day+.day.has{border-top:1px solid var(--line)}
@@ -694,7 +698,7 @@ function sessionCard(c,r,opts){
     <span class="sc">${CATLBL[c]}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta ${s.club==='inconnu'?'warn':''}">${esc(CLUBS[s.club])}</span>
     <span class="keep">Retenir</span><span class="ss">${r.w.length?'Avec '+esc(r.w.map(x=>pname(x.p)).join(' et ')):r.also&&r.also.length?'Proposé aussi à '+esc(r.also.map(pname).join(' et ')):'Proposé à la place du cours du groupe'}</span></button>`;
-  return `<button class="sess c-${c} ${opts.booked&&!r.away&&shortOf(s,r.w)?'pb':''} ${r.away?'away':''}" ${!opts.booked&&CATLBL[c]?'draggable="true"':''} data-act="slot" data-id="${s.id}">
+  return `<button class="sess c-${c} ${opts.booked&&!r.away&&shortOf(s,r.w)?'pb':''} ${r.away?'away':''} ${done?'done':''}" ${!opts.booked&&CATLBL[c]?'draggable="true"':''} data-act="slot" data-id="${s.id}">
     <span class="sc">${esc(r.label||CATLBL[c]||'Salle')}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta ${s.club==='inconnu'?'warn':''}">${esc(CLUBS[s.club])}</span>
     ${avs(r.w,bk)}${done?(rebookPending(ui.week,s,r.w.filter(x=>x.ok).map(x=>x.p))?`<span class="ss warn">${ui.me?'Réinscrite ?':'Réinscrites ?'}</span>`:''):settled?'':bookShort(s)}${settled?'':placesTxt(s,r.w)}${opts.booked&&CATLBL[c]&&!r.label&&r.w.some(x=>x.own&&x.ok)&&r.w.filter(x=>x.ok).length===1?`<span class="ss warn">${opts.me&&r.w.some(x=>x.own&&x.p===opts.me)?'Tu es seule pour l’instant':esc(pname(r.w.find(x=>x.own).p))+' est seule pour l’instant'}</span>`:''}${r.away?'<span class="ss">Sans toi</span>':''}</button>`}
@@ -716,7 +720,7 @@ function strip(pick,opts){const byDay={},add=(d,c,r)=>(byDay[d]=byDay[d]||[]).pu
   const canAdd=!!opts.booked;
   let h=`<div class="week7 ${canAdd?'pickable':''}">`;
   for(let d=0;d<7;d++){const e=(byDay[d]||[]).sort((x,y)=>x[1].s.min-y[1].s.min);
-    h+=`<div class="day ${e.length?'has':'rest'}" data-d="${d}"><div class="dh"><b>${DAYS[d].slice(0,3)}</b>${keyDate(ui.week,d).getDate()}</div>${e.length?`<div class="cards">${e.map(x=>sessionCard(x[0],x[1],opts||{})).join('')}</div>`:canAdd?`<button class="dayadd" data-act="daypick" data-v="${d}" aria-label="Choisir un cours ${DAYS[d].toLowerCase()}"><span>+</span></button>`:''}</div>`}
+    h+=`<div class="day ${e.length?'has':'rest'} ${keyDate(ui.week,d)<today0()?'past':''}" data-d="${d}"><div class="dh"><b>${DAYS[d].slice(0,3)}</b>${keyDate(ui.week,d).getDate()}</div>${e.length?`<div class="cards">${e.map(x=>sessionCard(x[0],x[1],opts||{})).join('')}</div>`:canAdd&&keyDate(ui.week,d)>=today0()?`<button class="dayadd" data-act="daypick" data-v="${d}" aria-label="Choisir un cours ${DAYS[d].toLowerCase()}"><span>+</span></button>`:''}</div>`}
   return h+`</div>`}
 
 function confirmBanner(){const c=confirmInfo(),miss=PEOPLE.filter(p=>!c.conf[p]);
