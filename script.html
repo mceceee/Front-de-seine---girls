@@ -122,6 +122,11 @@ const initial=p=>{const n=NAMES[p];for(let k=1;k<=3;k++){const me=n.slice(0,k).t
 function availOf(p,k){const w=week(k).avail;const o=w&&w[p];const pr=profile(p);
   const a=(o&&o.a)||pr.avail||DEFAULT_AVAIL, m=(o&&o.m)||pr.modes||DEFAULT_MODES;
   return {a:a.length===7*NB?a:DEFAULT_AVAIL,m:m.length===7?m:DEFAULT_MODES,custom:!!o}}
+/* La semaine type seule, sans tenir compte d'une semaine personnalisée. */
+function typeAvail(p){const pr=profile(p),a=pr.avail||DEFAULT_AVAIL,m=pr.modes||DEFAULT_MODES;
+  return {a:a.length===7*NB?a:DEFAULT_AVAIL,m:m.length===7?m:DEFAULT_MODES,custom:false}}
+/* Ce qu'on affiche et modifie dans l'onglet Dispos, selon l'onglet « Semaine type » ou « Semaine du … ». */
+function editAvail(p){return ui.scope==='week'?availOf(p):typeAvail(p)}
 const prefOf=(p,course)=>{const v=(profile(p).prefs||{})[course];return v===0||v===2?v:1};
 
 /* ---------- Créneaux ---------- */
@@ -463,14 +468,14 @@ function renderPlanning(){
   return h+`</div></section>`}
 
 function renderDispos(){
-  const p=ui.edit,av_=availOf(p),scopeWeek=ui.scope==='week',conf=!!(week().confirmed||{})[p];
+  const p=ui.edit,av_=editAvail(p),weekCustom=availOf(p).custom,scopeWeek=ui.scope==='week',conf=!!(week().confirmed||{})[p];
   const dis=Store.ready&&!Store.readonly?'':'disabled';
   let h=`<section class="blk"><div class="hd"><h2>Dispos de ${esc(pname(p))}</h2></div>
     ${(c=>conf?`<div class="confirm ok"><span class="avs">${av(p,'bk','✓')}</span><div class="ct"><b>Dispos validées</b><span>Semaine du ${esc(dayLabel(ui.week,0))}</span></div><button class="btn ghost sm" data-act="confirm" ${dis}>Annuler</button></div>`
       :`<div class="confirm ko"><span class="avs">${av(p,'off')}</span><div class="ct"><b>Dispos à valider</b><span>Semaine du ${esc(dayLabel(ui.week,0))} · ${c.left>1?'avant '+esc(longDate(c.deadline)).replace(/\.$/,'')+' soir':c.left===1?'avant demain soir':c.left===0?'ce soir au plus tard':'les inscriptions sont déjà ouvertes'}</span></div><button class="btn" data-act="confirm" ${dis}>Valider mes dispos</button></div>`)(confirmInfo())}
     <div class="two"><div class="col">
-      <div class="row"><span class="seg" role="group" aria-label="Portée"><button data-act="scope" data-v="type" aria-pressed="${!scopeWeek}">Semaine type</button><button data-act="scope" data-v="week" aria-pressed="${scopeWeek}">Semaine du ${esc(dayLabel(ui.week,0))}</button></span>
-        ${av_.custom?`<button class="btn ghost sm" data-act="resetweek" ${dis}>Revenir à la semaine type</button>`:''}</div>
+      <div class="row"><span class="seg" role="group" aria-label="Portée"><button data-act="scope" data-v="type" aria-pressed="${!scopeWeek}">Semaine type</button><button data-act="scope" data-v="week" aria-pressed="${scopeWeek}">Semaine du ${esc(dayLabel(ui.week,0))}${weekCustom?' · modifiée':''}</button></span>
+        ${scopeWeek&&weekCustom?`<button class="btn ghost sm" data-act="resetweek" ${dis}>Revenir à la semaine type</button>`:''}</div>
       <div class="scroller"><table class="av-t"><thead><tr><th></th>${DAYS.map(d=>`<th>${d.slice(0,3)}</th>`).join('')}</tr>
         <tr><th></th>${DAYS.map((d,i)=>`<td><select id="mode${i}" data-act="mode" data-d="${i}" aria-label="${d}" ${dis}>${Object.keys(MODES).map(k=>`<option value="${k}" ${av_.m[i]===k?'selected':''}>${MODES[k]}</option>`).join('')}</select></td>`).join('')}</tr></thead><tbody>`;
   for(let b=0;b<NB;b++){h+=`<tr><th class="rowh">${BANDS[b]}</th>`;
@@ -631,7 +636,7 @@ document.addEventListener('click',e=>{
   else if(a==='clearplan'){save(weekPath(),{plan:null,solo:null,out:null});ui.swap=null}
   else if(a==='confirm'){const cur=(week().confirmed||{})[ui.edit];save(weekPath(),{confirmed:{[ui.edit]:cur?null:true}});if(!cur)toast('Dispos validées.')}
   else if(a==='resetweek'){save(weekPath(),{avail:{[ui.edit]:null}})}
-  else if(a==='cell'){const p=ui.edit,av=availOf(p),i=+el.dataset.d*NB+ +el.dataset.b;const nv=((+av.a[i]||0)+1)%3;
+  else if(a==='cell'){const p=ui.edit,av=editAvail(p),i=+el.dataset.d*NB+ +el.dataset.b;const nv=((+av.a[i]||0)+1)%3;
     saveAvail(p,av.a.slice(0,i)+nv+av.a.slice(i+1),av.m)}
   else if(a==='pref'){const p=ui.edit;save('profiles/'+p,{prefs:{[el.dataset.c]:+v}})}
   else return;
@@ -644,7 +649,7 @@ document.addEventListener('pointerdown',e=>{const el=e.target.closest&&e.target.
   lpDone=false;clearTimeout(lpT);lpT=setTimeout(()=>{lpDone=true;pickFrom(el)},550)});
 ['pointerup','pointercancel','pointermove'].forEach(t=>document.addEventListener(t,e=>{if(t!=='pointermove'||Math.abs(e.movementX)+Math.abs(e.movementY)>6)clearTimeout(lpT)}));
 document.addEventListener('change',e=>{const el=e.target;const a=el.dataset&&el.dataset.act;
-  if(a==='mode'){const p=ui.edit,av=availOf(p),d=+el.dataset.d,k=el.value;
+  if(a==='mode'){const p=ui.edit,av=editAvail(p),d=+el.dataset.d,k=el.value;
     saveAvail(p,av.a.slice(0,d*NB)+PRESET[k]+av.a.slice((d+1)*NB),av.m.slice(0,d)+k+av.m.slice(d+1));render()}
   else if(a==='together'){ui.together=el.checked;render()}
 });
