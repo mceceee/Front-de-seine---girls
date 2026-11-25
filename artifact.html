@@ -433,7 +433,8 @@ function typeAvail(p){const pr=profile(p),a=pr.avail||DEFAULT_AVAIL,m=pr.modes||
   return {a:a.length===7*NB?a:DEFAULT_AVAIL,m:m.length===7?m:DEFAULT_MODES,custom:false}}
 /* Ce qu'on affiche et modifie dans l'onglet Dispos, selon l'onglet « Semaine type » ou « Semaine du … ». */
 function editAvail(p){return ui.scope==='week'?availOf(p):typeAvail(p)}
-const prefOf=(p,course)=>{const v=(profile(p).prefs||{})[course];return v===0||v===2?v:1};
+/* Les envies valent pour la semaine affichée seulement ; ailleurs tout est « Ok ». */
+const prefOf=(p,course)=>{const v=((week().prefs||{})[p]||{})[course];return v===0||v===2?v:1};
 
 /* ---------- Créneaux ---------- */
 const slotCache={};
@@ -797,7 +798,7 @@ function renderDispos(){
     <div class="two"><div class="col">
       ${weekCustom?`<div class="row"><span class="lbl">Semaine modifiée par rapport à ta semaine type</span><button class="btn ghost sm" data-act="resetweek" ${dis}>Revenir à la semaine type</button></div>`:''}
       ${availGrid(p,false,dis)}
-    </div><div class="col"><h3>Envies</h3>`;
+    </div><div class="col"><h3>Envies de la semaine</h3>`;
   const courses=[...new Set(slots().map(s=>s.course))];
   CATS.forEach(([c,l])=>{h+=`<div class="prefgroup"><h4 class="c-${c}">${l}</h4><div class="prefs">`+
     courses.filter(x=>CAT_OF[x]===c).sort().map(x=>{const v=prefOf(p,x);
@@ -915,7 +916,7 @@ document.addEventListener('click',e=>{
       if(ui.arm!==k){ui.arm=k;render();return}
       ui.arm=null;ui.menu=false;
       if(k==='week'){save(weekPath(),{by:null,plan:null,solo:null,out:null,places:null,booked:null,gym:null,pins:null,lieu:null,rebookNo:null,invites:null});toast('Semaine du '+dayLabel(ui.week,0)+' réinitialisée.')}
-      else if(k==='mine'){const p=resetWho();save('profiles/'+p,{avail:null,modes:null,prefs:null});save(weekPath(),{avail:{[p]:null},confirmed:{[p]:null}});toast('Dispos de '+pname(p)+' réinitialisées.')}
+      else if(k==='mine'){const p=resetWho();save('profiles/'+p,{avail:null,modes:null,prefs:null});save(weekPath(),{avail:{[p]:null},confirmed:{[p]:null},prefs:{[p]:null}});toast('Dispos de '+pname(p)+' réinitialisées.')}
       render();return}
     if(ui.arm){ui.arm=null}
     const mb=e.target.closest('[data-act="menu"]');
@@ -984,7 +985,7 @@ document.addEventListener('click',e=>{
   else if(a==='cell'&&el.dataset.t==='1'){if(dlgType){const i=+el.dataset.d*NB+ +el.dataset.b,nv=((+dlgType.a[i]||0)+1)%3;dlgType.a=dlgType.a.slice(0,i)+nv+dlgType.a.slice(i+1);renderDlg()}return}
   else if(a==='cell'){const p=ui.edit,av=availOf(p),i=+el.dataset.d*NB+ +el.dataset.b;const nv=((+av.a[i]||0)+1)%3;
     saveAvail(p,av.a.slice(0,i)+nv+av.a.slice(i+1),av.m,false)}
-  else if(a==='pref'){const p=ui.edit;save('profiles/'+p,{prefs:{[el.dataset.c]:+v}})}
+  else if(a==='pref'){const p=ui.edit;save(weekPath(),{prefs:{[p]:{[el.dataset.c]:+v===1?null:+v}}})}
   else return;
   render()});
 /* Clic droit (ordinateur) ou appui long (téléphone) sur une case : choisir un cours précis à cette heure. */
