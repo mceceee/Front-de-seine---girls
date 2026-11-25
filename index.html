@@ -743,11 +743,13 @@ function checkRows(pick){return catsByWeek(c=>pick[c]&&pick[c].s).filter(([c])=>
     return `<div class="rb"><span class="aw"><b>${DAYS[sl.day].slice(0,3)}. ${hhmm(sl.time)}</b>${courseTag(sl.course)}<span class="lbl">${b.st==='open'?'inscriptions ouvertes':'ouvre '+(b.dOpen===1?'demain':esc(b.lbl))}</span></span>
       <span class="rbp"><span class="lbl">Places restantes ?</span>${placesCtl(sl)}</span></div>`}).join('')}
 /* Pas assez de places : soit certaines laissent la leur (et reçoivent un créneau à part), soit tout le groupe change de cours. */
-function fixRows(pick){return catsByWeek(c=>pick[c]&&pick[c].s).filter(([c])=>pick[c]&&(pick[c].n===0||shortOf(pick[c].s,pick[c].w))&&!isDone(ui.week,pick[c].s)).map(([c])=>{
-  if(pick[c].n===0){const sl=pick[c].s,a=bestAlts(c,sl.id,1)[0];
-    return `<div class="rb"><span class="aw"><b>${DAYS[sl.day].slice(0,3)}. ${hhmm(sl.time)}</b>${courseTag(sl.course)}<span class="pl bad">Plus personne n’est dispo</span></span>
+/* Le cours ne tient que par celle qui l'a ajouté : on le signale, sans rien changer tout seul. */
+function alone(r){const ok=r.w.filter(x=>x.ok);return ok.length===1&&ok[0].own?ok[0].p:null}
+function fixRows(pick){return catsByWeek(c=>pick[c]&&pick[c].s).filter(([c])=>pick[c]&&(pick[c].n===0||alone(pick[c])||shortOf(pick[c].s,pick[c].w))&&!isDone(ui.week,pick[c].s)).map(([c])=>{
+  if(pick[c].n===0||alone(pick[c])){const sl=pick[c].s,a=bestAlts(c,sl.id,1)[0],solo=alone(pick[c]);
+    return `<div class="rb"><span class="aw"><b>${DAYS[sl.day].slice(0,3)}. ${hhmm(sl.time)}</b>${courseTag(sl.course)}<span class="pl bad">${solo?esc(pname(solo))+' est seule : personne d’autre n’est dispo':'Plus personne n’est dispo'}</span></span>
       <span class="rbp">${a?`<span class="aw"><span class="lbl">Remplacer par</span><b>${DAYS[a.s.day].slice(0,3)}. ${hhmm(a.s.time)}</b>${courseTag(a.s.course)}</span><button class="btn sm" data-act="setplan" data-cat="${c}" data-id="${a.s.id}">Remplacer</button>`:''}
-      <button class="btn ghost sm" data-act="unplan" data-v="${c}">Retirer</button></span></div>`}
+      ${solo?`<button class="btn ghost sm" data-act="slot" data-id="${sl.id}">Voir le cours</button>`:`<button class="btn ghost sm" data-act="unplan" data-v="${c}">Retirer</button>`}</span></div>`}
   const r=pick[c],sl=r.s,pl=placesOf(sl.id),bk=(week().booked||{})[sl.id]||{},wait=r.w.filter(x=>x.ok&&!bk[x.p]),anyBk=r.w.some(x=>x.ok&&bk[x.p]),a=bestAlts(c,sl.id,1)[0];
   const names=esc(wait.map(x=>pname(x.p)).join(wait.length===2?' et ':', '));
   let act='';
