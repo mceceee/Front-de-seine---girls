@@ -158,7 +158,8 @@ function candidates(){const ck=WEEKDATA[ui.week]?ui.week:'';if(!candCacheW[ck])c
   return candCache.filter(s=>{const v=lieuAt(s.day,s.band);return !v||v===s.club})}
 const GYM_TIMES=['07:00','08:15','09:30','10:45','12:00','12:30','13:15','14:45','16:00','17:15','18:30','19:45','21:00'];
 function gymSlot(id){const m=/^gym_(\d)-(\d{2})(\d{2})$/.exec(id);if(!m)return null;const mn=+m[2]*60+ +m[3];
-  return {id,gym:true,club:'auteuil',studio:'Salle',day:+m[1],time:m[2]+':'+m[3],min:mn,band:bandOf(mn),course:'SALLE',coach:'Accès libre',cat:null,dur:null,max:null}}
+  const g=(week().gym||{})[m[1]+'-'+m[2]+m[3]],club=isObj(g)&&g.club==='beaugrenelle'?'beaugrenelle':'auteuil';
+  return {id,gym:true,club,studio:'Salle',day:+m[1],time:m[2]+':'+m[3],min:mn,band:bandOf(mn),course:'SALLE',coach:CLUBS[club]+' · accès libre',cat:null,dur:null,max:null}}
 /* Qui vient à une séance de salle : {p1:true,…}. Une ancienne séance notée « true » vaut pour les trois. */
 function gymPart(key){const v=(week().gym||{})[key];if(v===true){const o={};PEOPLE.forEach(p=>o[p]=true);return o}
   if(isObj(v)&&PEOPLE.some(p=>v[p])){const o={};PEOPLE.forEach(p=>o[p]=!!v[p]);return o}return null}
@@ -336,7 +337,7 @@ function sessionCard(c,r,opts){const s=r.s,bk=(week().booked||{})[s.id]||null,do
   return `<button class="sess c-${c} ${opts.booked&&!r.away&&shortOf(s,r.w)?'pb':''} ${r.away?'away':''}" data-act="slot" data-id="${s.id}">
     <span class="sc">${esc(r.label||CATLBL[c]||'Salle')}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta">${esc(s.coach.split(' · ')[0])}${s.dur?' · '+s.dur+' min':''}</span>
-    ${avs(r.w,bk)}${done?(rebookPending(ui.week,s,r.w.filter(x=>x.ok).map(x=>x.p))?`<span class="ss warn">${ui.me?'Réinscrite ?':'Réinscrites ?'}</span>`:''):bookShort(s)}${placesTxt(s,r.w)}${clubNote(s)?'<span class="ss '+(s.club==='inconnu'?'warn':'')+'">'+(s.club==='inconnu'?clubNote(s):'À Beaugrenelle')+'</span>':''}${opts.booked&&CATLBL[c]&&!r.label&&r.w.some(x=>x.own&&x.ok)&&r.w.filter(x=>x.ok).length===1?`<span class="ss warn">${opts.me&&r.w.some(x=>x.own&&x.p===opts.me)?'Tu es seule pour l’instant':esc(pname(r.w.find(x=>x.own).p))+' est seule pour l’instant'}</span>`:''}${isPinned(s)?'<span class="ss">Cours choisi</span>':''}${r.away?'<span class="ss">Sans toi</span>':''}</button>`}
+    ${avs(r.w,bk)}${done?(rebookPending(ui.week,s,r.w.filter(x=>x.ok).map(x=>x.p))?`<span class="ss warn">${ui.me?'Réinscrite ?':'Réinscrites ?'}</span>`:''):bookShort(s)}${placesTxt(s,r.w)}${clubNote(s)&&!s.gym?'<span class="ss '+(s.club==='inconnu'?'warn':'')+'">'+(s.club==='inconnu'?clubNote(s):'À Beaugrenelle')+'</span>':''}${opts.booked&&CATLBL[c]&&!r.label&&r.w.some(x=>x.own&&x.ok)&&r.w.filter(x=>x.ok).length===1?`<span class="ss warn">${opts.me&&r.w.some(x=>x.own&&x.p===opts.me)?'Tu es seule pour l’instant':esc(pname(r.w.find(x=>x.own).p))+' est seule pour l’instant'}</span>`:''}${isPinned(s)?'<span class="ss">Cours choisi</span>':''}${r.away?'<span class="ss">Sans toi</span>':''}</button>`}
 function strip(pick,opts){const byDay={},add=(d,c,r)=>(byDay[d]=byDay[d]||[]).push([c,r]);
   const me=opts&&opts.me,mine=w=>!me||w.some(x=>x.p===me&&x.ok),so=week().solo||{};
   const sugDays=[];
@@ -552,6 +553,7 @@ function renderDlg(){
     box.innerHTML=`<div class="dlg"><div class="dh2"><h3>Séance de salle</h3><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
       <div class="lbl">Jour</div><div class="chipsrow">${DAYS.map((d,i)=>`<button class="chipbtn" data-act="gymday" data-v="${i}" aria-pressed="${g.d===i}">${d.slice(0,3)} ${keyDate(ui.week,i).getDate()}</button>`).join('')}</div>
       <div class="lbl">Heure</div><div class="chipsrow">${GYM_TIMES.map(t=>`<button class="chipbtn" data-act="gymtime" data-v="${t}" aria-pressed="${g.t===t}">${hhmm(t)}</button>`).join('')}</div>
+      <div class="lbl">Salle</div><div class="chipsrow">${['auteuil','beaugrenelle'].map(c=>`<button class="chipbtn" data-act="gymclub" data-v="${c}" aria-pressed="${g.club===c}">${CLUBS[c]}</button>`).join('')}</div>
       <div class="lbl">Qui vient</div><div class="chipsrow">${PEOPLE.map(p=>`<button class="chipbtn" data-act="gympers" data-v="${p}" aria-pressed="${!!g.who[p]}">${esc(pname(p))}</button>`).join('')}</div>
       <button class="btn" data-act="gymsave" ${PEOPLE.some(p=>g.who[p])?'':'disabled'}>Ajouter à notre semaine</button></div>`;return}
   if(dlgPick){const {d,b}=dlgPick;
@@ -573,7 +575,7 @@ function renderDlg(){
   const canInvite=x=>ui.me&&x.p!==ui.me&&b.st!=='past'&&(isGym?!x.ok:!(booked[x.p]||(inPlan&&x.ok)||solos.some(o=>o.p===x.p)));
   box.innerHTML=`<div class="dlg c-${s.cat||'x'}">
     <div class="dh2"><div><span class="sc">${CATLBL[s.cat]||(isGym?'Salle':'')}</span><h3>${esc(whenTxt(s))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer">×</button></div>
-    <p class="meta">${courseTag(s.course)} ${isGym?'':`<b class="club">${CLUBS[s.club]}</b> · `}${esc(s.coach)}${s.dur?' · '+s.dur+' min':''}${s.max?' · '+s.max+' places':''}</p>
+    <p class="meta">${courseTag(s.course)} ${isGym?'':`<b class="club">${CLUBS[s.club]}</b> · `}${isGym?`<b class="club">${CLUBS[s.club]}</b> · accès libre`:esc(s.coach)}${s.dur?' · '+s.dur+' min':''}${s.max?' · '+s.max+' places':''}</p>
     ${past?`<div class="lbl">Cours passé · réinscrite pour la semaine suivante ?</div>`:''}
     <div class="people">${w.map(x=>`<div class="prow2">${av(x.p,x.ok?'on':'off')}<span class="pn">${esc(pname(x.p))}</span>
       <span class="ps">${isGym?(x.ok?'vient':'ne vient pas'):solos.length&&!solos.some(o=>o.p===x.p)?'':x.out?'a laissé sa place':x.own&&!(x.a>0&&x.pr>0)?'l’a ajouté à la semaine':x.pr===0?'ne veut pas ce cours':x.a===0?'pas dispo':x.a===2?'créneau idéal':'possible'}${x.pr===2&&x.ok?' · adore':''}</span>
@@ -659,11 +661,12 @@ document.addEventListener('click',e=>{
     else if((week().plan||{})[sl.cat]===sl.id)patch.out={[sl.id]:{[d.p]:null}};else patch.solo={[d.p]:{[sl.cat]:sl.id}};
     save(weekPath(),patch);toast('C’est noté : '+sl.course+' de '+DAYS[sl.day].toLowerCase()+'.')}
   else if(a==='invno'){const d=el.dataset;save(weekPath(),{invites:{[d.id]:{to:{[d.p]:'no'}}}})}
-  else if(a==='gymadd'){const wh={};PEOPLE.forEach(p=>wh[p]=ui.me?p===ui.me:true);dlgGym={d:0,t:'18:30',who:wh};dlgSlot=null;dlgCat=null;dlgPick=null;openDlg();return}
+  else if(a==='gymadd'){const wh={};PEOPLE.forEach(p=>wh[p]=ui.me?p===ui.me:true);dlgGym={d:0,t:'18:30',who:wh,club:'auteuil'};dlgSlot=null;dlgCat=null;dlgPick=null;openDlg();return}
   else if(a==='gymday'){if(dlgGym)dlgGym.d=+v;renderDlg();return}
   else if(a==='gymtime'){if(dlgGym)dlgGym.t=v;renderDlg();return}
+  else if(a==='gymclub'){if(dlgGym)dlgGym.club=v;renderDlg();return}
   else if(a==='gympers'){if(dlgGym)dlgGym.who[v]=!dlgGym.who[v];renderDlg();return}
-  else if(a==='gymsave'){const g=dlgGym;if(g&&PEOPLE.some(p=>g.who[p])){const key=g.d+'-'+g.t.replace(':',''),cur=gymPart(key)||{},o={};PEOPLE.forEach(p=>o[p]=!!(cur[p]||g.who[p]));
+  else if(a==='gymsave'){const g=dlgGym;if(g&&PEOPLE.some(p=>g.who[p])){const key=g.d+'-'+g.t.replace(':',''),cur=gymPart(key)||{},o={};PEOPLE.forEach(p=>o[p]=!!(cur[p]||g.who[p]));o.club=g.club;
     save(weekPath(),{gym:{[key]:o}});closeDlg();toast('Séance de salle ajoutée.')}}
   else if(a==='gymwho'){const id=el.dataset.id,key=id.slice(4),p=el.dataset.p,cur=gymPart(key)||{},o={};PEOPLE.forEach(q=>o[q]=q===p?!cur[q]:!!cur[q]);
     if(PEOPLE.some(q=>o[q])){const patch={gym:{[key]:o}};if(!o[p])patch.booked={[id]:{[p]:null}};save(weekPath(),patch)}
@@ -673,7 +676,7 @@ document.addEventListener('click',e=>{
   else if(a==='unplan'){save(weekPath(),{plan:{[v]:null},pins:{[v]:null},by:{[v]:null}});closeDlg()}
   else if(a==='rebook'){const d=el.dataset,yes=d.v==='1',on=el.getAttribute&&el.getAttribute('aria-pressed')==='true';
     const patch={booked:{[d.id]:{[d.p]:yes&&!on?true:null}},rebookNo:{[d.id]:{[d.p]:!yes&&!on?true:null}}};
-    if(d.id.startsWith('gym_'))patch.gym={[d.id.slice(4)]:{[d.p]:yes&&!on}};
+    if(d.id.startsWith('gym_')){const src=(week().gym||{})[d.id.slice(4)];patch.gym={[d.id.slice(4)]:{[d.p]:yes&&!on,club:isObj(src)&&src.club||'auteuil'}}}
     save(weekPath(d.w),patch)}
   else if(a==='closedlg'){closeDlg();return}
   else if(a==='places'){save(weekPath(),{places:{[el.dataset.id]:v===''?null:+v}})}
