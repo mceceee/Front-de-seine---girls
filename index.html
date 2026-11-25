@@ -185,6 +185,7 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .frow{display:flex;justify-content:space-between;align-items:center;border:0;border-bottom:1px solid var(--line);background:none;padding:12px 16px;font-size:14px;text-align:left;color:var(--fg)}
 .frow:hover{background:rgba(255,255,255,.07)}
 .frow[aria-pressed="true"]{background:rgba(255,255,255,.16);font-weight:700}
+.frl{display:inline-flex;align-items:center;gap:10px}
 .frow svg{width:18px;height:18px;stroke-width:2.2}
 .ffoot{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
 .fchip{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;background:var(--sel);color:var(--on-sel);font-size:13px;font-weight:600;padding:6px 8px 6px 13px}
@@ -798,19 +799,19 @@ const PARTS=[['all','Tout'],['am','Matin'],['pm','Aprem'],['eve','Soirée']];
 const inPart=(min,p)=>p==='am'?min<720:p==='pm'?min>=720&&min<1020:p==='eve'?min>=1020:true;
 const PARTLBL={am:'Matin',pm:'Après-midi',eve:'Soirée'};
 /* Filtres à choix multiples : un menu par critère pour en ajouter, une pastille avec croix par filtre actif. */
-function rfState(cat){const f=ui.rf||{};return {parts:f.parts||[],cats:f.cats||[cat],clubs:f.clubs||[]}}
+function rfState(cat){const f=ui.rf||{};return {parts:f.parts||[],cats:f.cats||[cat],clubs:f.clubs||[],who:f.who||[]}}
 function replaceLists(cat,sl){const f=rfState(cat),cats=f.cats.length?f.cats:CATS.map(c=>c[0]);
   const byTime=(a,b)=>a.s.day-b.s.day||a.s.min-b.s.min||a.s.course.localeCompare(b.s.course)||(a.s.club<b.s.club?-1:1),by=recommend().by;
   const same=[].concat(...cats.map(c=>by[c])).filter(a=>a.s.id!==sl.id&&a.s.day===sl.day&&!shortOf(a.s,a.w)
-    &&(!f.parts.length||f.parts.some(p=>inPart(a.s.min,p)))&&(!f.clubs.length||f.clubs.includes(a.s.club))).sort(byTime);
+    &&(!f.parts.length||f.parts.some(p=>inPart(a.s.min,p)))&&(!f.clubs.length||f.clubs.includes(a.s.club))&&f.who.every(p=>a.w.some(x=>x.p===p&&x.ok))).sort(byTime);
   const other=by[cat].filter(a=>a.s.id!==sl.id&&a.s.course===sl.course&&a.s.day!==sl.day&&!dayTaken(cat,a.s.day)&&!shortOf(a.s,a.w)).sort(byTime);
-  const DEF={parts:['Heure',Object.entries(PARTLBL)],cats:['Catégorie',CATS],clubs:['Lieu',[['auteuil','Auteuil'],['beaugrenelle','Beaugrenelle']]]};
+  const DEF={parts:['Heure',Object.entries(PARTLBL)],cats:['Catégorie',CATS],clubs:['Lieu',[['auteuil','Auteuil'],['beaugrenelle','Beaugrenelle']]],who:['Dispo',PEOPLE.map(p=>[p,pname(p)])]};
   const open=ui.rfOpen,draft=ui.rfDraft||[];
   const pill=k=>`<button class="fpill ${f[k].length?'on':''}" data-act="rfopen" data-k="${k}" aria-expanded="${open===k}">${DEF[k][0]}${f[k].length?`<span class="fcount">${f[k].length}</span>`:''}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${open===k?'M6 14.5l6-6 6 6':'M6 9.5l6 6 6-6'}"/></svg></button>`;
-  const panel=open?`<div class="fpanel" role="group" aria-label="${DEF[open][0]}">${DEF[open][1].map(([v,l])=>`<button class="frow" data-act="rftog" data-v="${v}" aria-pressed="${draft.includes(v)}"><span>${l}</span>${draft.includes(v)?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':''}</button>`).join('')}
+  const panel=open?`<div class="fpanel" role="group" aria-label="${DEF[open][0]}">${DEF[open][1].map(([v,l])=>`<button class="frow" data-act="rftog" data-v="${v}" aria-pressed="${draft.includes(v)}"><span class="frl">${open==='who'?av(v,'on'):''}${esc(l)}</span>${draft.includes(v)?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':''}</button>`).join('')}
       <div class="ffoot"><button class="btn ghost sm" data-act="rfclear">Effacer</button><button class="btn sm" data-act="rfsave">Enregistrer</button></div></div>`:'';
   return `<div class="lbl">Remplacer par, le même jour</div>
-    <div class="filters2">${pill('parts')}${pill('cats')}${pill('clubs')}</div>${panel}
+    <div class="filters2">${pill('parts')}${pill('cats')}${pill('clubs')}${pill('who')}</div>${panel}
     ${same.length?`<div class="alts">${same.map(a=>altRow(a,a.s.cat,cat)).join('')}</div>`:`<p class="none">Aucun cours ne correspond à ces filtres ce jour-là.</p>`}
     ${cats.some(c=>c!==cat)?`<p class="none">Choisir un cours d’une autre catégorie remplace cette séance ${CATLBL[cat]}.</p>`:''}
     ${other.length?`<div class="lbl">${esc(sl.course)} un autre jour</div><div class="alts">${other.map(a=>altRow(a,cat)).join('')}</div>`:''}`}
