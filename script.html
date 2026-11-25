@@ -1,6 +1,8 @@
 <script>
 const DATA=/*__DATA__*/{"auteuil":[],"beaugrenelle":[]}/*__ENDDATA__*/;
 const CATALOG=/*__CAT__*/{}/*__ENDCAT__*/;
+/* Hors de claude.ai (Vercel) : identifiants publics du projet Firebase, injectés par build.py depuis firebase-config.json. */
+const FIREBASE_CONFIG=/*__FB__*/null/*__ENDFB__*/;
 
 /* ---------- Référentiels ---------- */
 const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
@@ -62,11 +64,33 @@ const Store=(()=>{
     const ref=db.doc(path);
     const p=exists(path)?ref.update(patch):ref.set(stripNulls(patch));
     p.then(()=>{if(!exists(path))docs[path]=stripNulls(patch);else docs[path]=applyPatch(clone(docs[path]),patch);delete inflight[path];onChange();if(pend[path])flush(path)},
-      e=>{delete inflight[path];if(e&&(e.code==='invalid_argument'||e.code==='revoked'||e.code==='not_granted')){dead=true;toast('Tu peux consulter, mais pas modifier : demande un accès « Contributeur ».')}
+      e=>{delete inflight[path];if(e&&(e.code==='invalid_argument'||e.code==='revoked'||e.code==='not_granted')){dead=true;toast(groupCode?'Modification refusée par la base : vérifie les règles Firebase.':'Tu peux consulter, mais pas modifier : demande un accès « Contributeur ».')}
         else toast('Enregistrement impossible pour le moment. Réessaie dans un instant.');onChange()})}
+  /* Base Firebase (site hébergé hors de claude.ai). Les données d'un groupe vivent sous groups/<code secret>/… ;
+     le code vient du lien (?g=…), il est gardé sur l'appareil, et il en est créé un nouveau s'il n'y en a pas. */
+  let groupCode=null;
+  function pickGroup(){let g=null;
+    try{g=new URLSearchParams(location.search).get('g')}catch(e){}
+    if(!g||!/^[A-Za-z0-9]{20,64}$/.test(g)){try{g=localStorage.getItem('fds:g')}catch(e){}}
+    if(!g||!/^[A-Za-z0-9]{20,64}$/.test(g)){const abc='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789',r=new Uint8Array(28);crypto.getRandomValues(r);g=Array.from(r,x=>abc[x%abc.length]).join('')}
+    try{localStorage.setItem('fds:g',g)}catch(e){}
+    try{const u=new URL(location.href);if(u.searchParams.get('g')!==g){u.searchParams.set('g',g);history.replaceState(null,'',u.toString())}}catch(e){}
+    return g}
+  async function cloudDb(){
+    const V='https://www.gstatic.com/firebasejs/10.12.2/';
+    const [{initializeApp},fs]=await Promise.all([import(V+'firebase-app.js'),import(V+'firebase-firestore.js')]);
+    const fdb=fs.getFirestore(initializeApp(FIREBASE_CONFIG));groupCode=pickGroup();
+    const conv=o=>{const r={};for(const k in o){const v=o[k];r[k]=v===null?fs.deleteField():isObj(v)?conv(v):v}return r};
+    const err=e=>({code:e&&e.code==='permission-denied'?'not_granted':'unavailable'});
+    return {
+      collection:c=>({onSnapshot:(next,fail)=>fs.onSnapshot(fs.collection(fdb,'groups',groupCode,c),
+        snap=>next({docs:snap.docs.map(d=>({id:d.id,data:()=>d.data()})),metadata:{fromCache:snap.metadata.fromCache}}),e=>fail(err(e)))}),
+      doc:path=>{const [c,id]=path.split('/'),ref=fs.doc(fdb,'groups',groupCode,c,id);
+        return {update:p=>fs.setDoc(ref,conv(p),{merge:true}).catch(e=>{throw err(e)}),set:d=>fs.setDoc(ref,d).catch(e=>{throw err(e)})}}}}
   function startLocal(){mode='local';const all=ls.get('docs')||{};for(const k in all)docs[k]=all[k];COLLS.forEach(c=>loaded[c]=true);onChange()}
   async function init(cb){onChange=cb;
     let d=null;try{d=window.claude&&window.claude.use?await window.claude.use('db'):null}catch(e){d=null}
+    if(!d&&FIREBASE_CONFIG&&!(window.claude&&window.claude.use)){try{d=await cloudDb()}catch(e){d=null;groupCode=null}}
     if(!d){startLocal();return}
     db=d;mode='shared';
     const timer=setTimeout(()=>{stale=true;onChange()},10000);
@@ -78,7 +102,9 @@ const Store=(()=>{
       e=>{loaded[c]=true;clearTimeout(timer);dead=true;onChange()})});
     onChange()}
   return {get,exists,write,init,
-    get mode(){return mode},get ready(){return mode!=='pending'&&COLLS.every(c=>loaded[c])},get stale(){return stale},get readonly(){return dead}}
+    get mode(){return mode},get ready(){return mode!=='pending'&&COLLS.every(c=>loaded[c])},get stale(){return stale},get readonly(){return dead},
+    /* Lien à envoyer aux deux autres (seulement en mode Firebase). */
+    get link(){if(!groupCode)return null;try{const u=new URL(location.href);u.hash='';u.search='?g='+groupCode;return u.toString()}catch(e){return null}}}
 })();
 
 /* ---------- État d'interface ---------- */
@@ -246,7 +272,7 @@ function renderTop(){
       ${(items=>items.length?`<span class="more"><button class="rnd" data-act="menu" aria-label="Autres actions" aria-expanded="${!!ui.menu}">⋯</button>${ui.menu?`<div class="menu" role="menu">
         ${items.map(([k,l])=>
           `<button class="menuitem ${ui.arm===k?'danger':''}" role="menuitem" data-act="arm" data-v="${k}" ${Store.ready&&!Store.readonly?'':'disabled'}>${ui.arm===k?'Confirmer : tout effacer':esc(l)}</button>`).join('')}</div>`:''}</span>`:'')(
-        ui.tab==='semaine'?[['week','Réinitialiser la semaine du '+dayLabel(wk,0)]]:ui.tab==='dispos'?[['mine','Réinitialiser les dispos de '+pname(resetWho())]]:[])}
+        ui.tab==='semaine'?(Store.link?[['link','Copier le lien pour Coco et Clem']]:[]).concat([['week','Réinitialiser la semaine du '+dayLabel(wk,0)]]):ui.tab==='dispos'?[['mine','Réinitialiser les dispos de '+pname(resetWho())]]:[])}
     </div>`}
 
 /* Une semaine sur 7 colonnes : les séances posées sur leur jour, les jours de repos laissés vides. */
@@ -540,6 +566,8 @@ document.addEventListener('click',e=>{
   if(lpDone){lpDone=false;return}
   {const b=e.target.closest('[data-act="arm"]');
     if(b&&b.dataset.act==='arm'){const k=b.dataset.v;
+      if(k==='link'){ui.menu=false;ui.arm=null;const L=Store.link;
+        (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(L):Promise.reject()).then(()=>toast('Lien copié. Envoie-le à Coco et Clem.'),()=>toast('Copie impossible : copie l’adresse de la page à la main.'));renderTop();return}
       if(ui.arm!==k){ui.arm=k;render();return}
       ui.arm=null;ui.menu=false;
       if(k==='week'){save(weekPath(),{plan:null,solo:null,out:null,places:null,booked:null,gym:null,pins:null,lieu:null,rebookNo:null,invites:null});toast('Semaine du '+dayLabel(ui.week,0)+' réinitialisée.')}

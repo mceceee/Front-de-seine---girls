@@ -17,5 +17,12 @@ js=lambda o: json.dumps(o,ensure_ascii=False,separators=(',',':')).replace('<','
 html=open(os.path.join(root,'head.html'),encoding='utf-8').read()+open(os.path.join(root,'script.html'),encoding='utf-8').read()
 html=re.sub(r'/\*__DATA__\*/.*?/\*__ENDDATA__\*/',lambda m:js(data),html,flags=re.S)
 html=re.sub(r'/\*__CAT__\*/.*?/\*__ENDCAT__\*/',lambda m:js(cat),html,flags=re.S)
-open(os.path.join(root,'index.html'),'w',encoding='utf-8').write(html)
+# Identifiants publics Firebase (facultatif) : sans ce fichier, la page reste en mode local hors de claude.ai.
+fbp=os.path.join(root,'firebase-config.json')
+fb=js(json.load(open(fbp,encoding='utf-8'))) if os.path.exists(fbp) else 'null'
+html=re.sub(r'/\*__FB__\*/.*?/\*__ENDFB__\*/',lambda m:fb,html,flags=re.S)
+open(os.path.join(root,'artifact.html'),'w',encoding='utf-8').write(html)
+# Version autonome (document complet) pour un hébergement classique comme Vercel.
+shell='<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>'
+open(os.path.join(root,'index.html'),'w',encoding='utf-8').write(shell+html+'</body></html>')
 print(len(html),{k:len(v) for k,v in data.items()},len(cat))
