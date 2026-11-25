@@ -471,7 +471,7 @@ const Store=(()=>{
     const V='https://www.gstatic.com/firebasejs/10.12.2/';
     const [{initializeApp},fs]=await Promise.all([import(V+'firebase-app.js'),import(V+'firebase-firestore.js')]);
     const fdb=fs.getFirestore(initializeApp(FIREBASE_CONFIG));groupCode=pickGroup();
-    const conv=o=>{const r={};for(const k in o){const v=o[k];r[k]=v===null?fs.deleteField():isObj(v)?conv(v):v}return r};
+    const conv=o=>{const r={};for(const k in o){const v=o[k];if(v===null)r[k]=fs.deleteField();else if(isObj(v)){const c=conv(v);if(Object.keys(c).length)r[k]=c}else r[k]=v}return r};
     const err=e=>({code:e&&e.code==='permission-denied'?'not_granted':'unavailable'});
     return {
       collection:c=>({onSnapshot:(next,fail)=>fs.onSnapshot(fs.collection(fdb,'groups',groupCode,c),
@@ -1103,7 +1103,9 @@ document.getElementById('dlg').addEventListener('close',()=>{dlgSure=null;dlgSlo
 document.getElementById('dlg').addEventListener('click',e=>{if(e.target&&e.target.id==='dlg'&&!ui.rfOpen)closeDlg()});
 
 let toastT;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},3800)}
-function save(path,patch){if(!Store.write(path,patch))toast(Store.readonly?'Lecture seule : rien n’a été modifié.':'Encore un instant, les données se chargent.')}
+/* Un objet vide dans une modification ne veut rien dire : envoyé tel quel à Firestore, il effacerait tout le champ. */
+function prune(o){const r={};for(const k in o){const v=o[k];if(isObj(v)){const c=prune(v);if(Object.keys(c).length)r[k]=c}else r[k]=v}return r}
+function save(path,patch){patch=prune(patch);if(!Object.keys(patch).length)return;if(!Store.write(path,patch))toast(Store.readonly?'Lecture seule : rien n’a été modifié.':'Encore un instant, les données se chargent.')}
 function saveAvail(p,a,m,type){
   if(!type)save(weekPath(),{avail:{[p]:{a,m}}});
   else save('profiles/'+p,{avail:a,modes:m})}
