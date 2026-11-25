@@ -1,0 +1,1353 @@
+[
+ {
+  "studio": "Spinning Studio",
+  "day": "lundi",
+  "time": "07:00",
+  "course": "RPM",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "lundi",
+  "time": "12:30",
+  "course": "RPM",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "lundi",
+  "time": "17:15",
+  "course": "RPM",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "lundi",
+  "time": "18:30",
+  "course": "SPRINT",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "lundi",
+  "time": "19:45",
+  "course": "RPM",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mardi",
+  "time": "07:00",
+  "course": "RPM",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mardi",
+  "time": "08:15",
+  "course": "RPM",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mardi",
+  "time": "12:00",
+  "course": "SPRINT",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mardi",
+  "time": "13:15",
+  "course": "RPM",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mardi",
+  "time": "17:15",
+  "course": "RPM",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mardi",
+  "time": "18:30",
+  "course": "RPM",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mardi",
+  "time": "19:45",
+  "course": "RPM",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mardi",
+  "time": "21:00",
+  "course": "RPM",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mercredi",
+  "time": "09:30",
+  "course": "RPM",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mercredi",
+  "time": "12:00",
+  "course": "RPM",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mercredi",
+  "time": "13:15",
+  "course": "SPRINT",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mercredi",
+  "time": "17:15",
+  "course": "RPM",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mercredi",
+  "time": "18:30",
+  "course": "RPM",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "mercredi",
+  "time": "19:45",
+  "course": "RPM",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "jeudi",
+  "time": "07:00",
+  "course": "SPRINT",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "jeudi",
+  "time": "08:15",
+  "course": "RPM",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "jeudi",
+  "time": "12:00",
+  "course": "RPM",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "jeudi",
+  "time": "17:15",
+  "course": "RPM",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "jeudi",
+  "time": "18:30",
+  "course": "RPM",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "jeudi",
+  "time": "19:45",
+  "course": "SPRINT",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "jeudi",
+  "time": "21:00",
+  "course": "RPM",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "vendredi",
+  "time": "09:30",
+  "course": "RPM",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "vendredi",
+  "time": "12:00",
+  "course": "RPM",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "vendredi",
+  "time": "17:15",
+  "course": "RPM",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "vendredi",
+  "time": "18:30",
+  "course": "RPM",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "vendredi",
+  "time": "19:45",
+  "course": "RPM",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "samedi",
+  "time": "09:30",
+  "course": "RPM",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "samedi",
+  "time": "10:45",
+  "course": "RPM",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "samedi",
+  "time": "12:00",
+  "course": "RPM",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "samedi",
+  "time": "17:15",
+  "course": "RPM",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "dimanche",
+  "time": "09:30",
+  "course": "RPM",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "dimanche",
+  "time": "10:45",
+  "course": "RPM",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "dimanche",
+  "time": "12:00",
+  "course": "SPRINT",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Spinning Studio",
+  "day": "dimanche",
+  "time": "18:30",
+  "course": "RPM",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "lundi",
+  "time": "08:15",
+  "course": "TRX FORCE",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "lundi",
+  "time": "09:30",
+  "course": "TRX FORCE",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "lundi",
+  "time": "10:45",
+  "course": "TRX FORCE",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "lundi",
+  "time": "12:00",
+  "course": "TRX CROSS",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "lundi",
+  "time": "13:15",
+  "course": "TRX CROSS",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "lundi",
+  "time": "17:15",
+  "course": "TRX FORCE",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "lundi",
+  "time": "18:30",
+  "course": "TRX FORCE",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "lundi",
+  "time": "19:45",
+  "course": "TRX BENCH",
+  "coach": "Samir"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "lundi",
+  "time": "21:00",
+  "course": "TRX BENCH",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mardi",
+  "time": "09:30",
+  "course": "TRX MOBILITÉ",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mardi",
+  "time": "12:00",
+  "course": "TRX BENCH",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mardi",
+  "time": "13:15",
+  "course": "TRX BENCH",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mardi",
+  "time": "17:15",
+  "course": "TRX CROSS",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mardi",
+  "time": "18:30",
+  "course": "TRX CROSS",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mardi",
+  "time": "19:45",
+  "course": "TRX MOBILITÉ",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mardi",
+  "time": "21:00",
+  "course": "TRX MOBILITÉ",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mercredi",
+  "time": "07:00",
+  "course": "TRX FORCE",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mercredi",
+  "time": "08:15",
+  "course": "TRX MOBILITÉ",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mercredi",
+  "time": "10:45",
+  "course": "TRX BENCH",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mercredi",
+  "time": "12:00",
+  "course": "TRX FORCE",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mercredi",
+  "time": "13:15",
+  "course": "TRX FORCE",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mercredi",
+  "time": "17:15",
+  "course": "TRX BENCH",
+  "coach": "Samir"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mercredi",
+  "time": "18:30",
+  "course": "TRX BENCH",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mercredi",
+  "time": "19:45",
+  "course": "TRX CROSS",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "mercredi",
+  "time": "21:00",
+  "course": "TRX CROSS",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "jeudi",
+  "time": "10:45",
+  "course": "TRX FORCE",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "jeudi",
+  "time": "12:00",
+  "course": "TRX MOBILITÉ",
+  "coach": "Alice"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "jeudi",
+  "time": "13:15",
+  "course": "TRX MOBILITÉ",
+  "coach": "Alice"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "jeudi",
+  "time": "16:00",
+  "course": "TRX FORCE",
+  "coach": "Samir"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "jeudi",
+  "time": "17:15",
+  "course": "TRX FORCE",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "jeudi",
+  "time": "18:30",
+  "course": "TRX FORCE",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "jeudi",
+  "time": "19:45",
+  "course": "TRX BENCH",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "jeudi",
+  "time": "21:00",
+  "course": "TRX BENCH",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "vendredi",
+  "time": "10:45",
+  "course": "TRX BENCH",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "vendredi",
+  "time": "12:00",
+  "course": "TRX BENCH",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "vendredi",
+  "time": "17:15",
+  "course": "TRX MOBILITÉ",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "vendredi",
+  "time": "18:30",
+  "course": "TRX CROSS",
+  "coach": "Alice"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "vendredi",
+  "time": "19:45",
+  "course": "TRX FORCE",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "samedi",
+  "time": "09:30",
+  "course": "TRX FORCE",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "samedi",
+  "time": "10:45",
+  "course": "TRX CROSS",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "samedi",
+  "time": "12:00",
+  "course": "TRX BENCH",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "samedi",
+  "time": "16:00",
+  "course": "TRX MOBILITÉ",
+  "coach": "Alice"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "dimanche",
+  "time": "09:30",
+  "course": "TRX MOBILITÉ",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "dimanche",
+  "time": "10:45",
+  "course": "TRX FORCE",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "dimanche",
+  "time": "12:00",
+  "course": "TRX BENCH",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "dimanche",
+  "time": "17:15",
+  "course": "TRX FORCE",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "TRX Studio",
+  "day": "dimanche",
+  "time": "18:30",
+  "course": "TRX BENCH",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "lundi",
+  "time": "12:00",
+  "course": "SKILL",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "lundi",
+  "time": "13:15",
+  "course": "SKILL",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "lundi",
+  "time": "17:15",
+  "course": "SKILL",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "lundi",
+  "time": "18:30",
+  "course": "SKILL",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "lundi",
+  "time": "19:45",
+  "course": "WOD",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "lundi",
+  "time": "21:00",
+  "course": "WOD",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mardi",
+  "time": "07:00",
+  "course": "SKILL",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mardi",
+  "time": "08:15",
+  "course": "SKILL",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mardi",
+  "time": "10:45",
+  "course": "SKILL",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mardi",
+  "time": "12:00",
+  "course": "WOD",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mardi",
+  "time": "13:15",
+  "course": "WOD",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mardi",
+  "time": "17:15",
+  "course": "WOD",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mardi",
+  "time": "18:30",
+  "course": "WOD",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mardi",
+  "time": "19:45",
+  "course": "SKILL",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mardi",
+  "time": "21:00",
+  "course": "SKILL",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mercredi",
+  "time": "09:30",
+  "course": "SKILL",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mercredi",
+  "time": "10:45",
+  "course": "GYM BASIC",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mercredi",
+  "time": "12:30",
+  "course": "SKILL",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mercredi",
+  "time": "17:15",
+  "course": "SKILL",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mercredi",
+  "time": "18:30",
+  "course": "SKILL",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mercredi",
+  "time": "19:45",
+  "course": "WOD",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "mercredi",
+  "time": "21:00",
+  "course": "WOD",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "jeudi",
+  "time": "12:00",
+  "course": "SKILL",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "jeudi",
+  "time": "13:15",
+  "course": "SKILL",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "jeudi",
+  "time": "17:15",
+  "course": "WOD",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "jeudi",
+  "time": "18:30",
+  "course": "WOD",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "jeudi",
+  "time": "19:45",
+  "course": "SKILL",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "jeudi",
+  "time": "21:00",
+  "course": "SKILL",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "vendredi",
+  "time": "09:30",
+  "course": "GYM BASIC",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "vendredi",
+  "time": "10:45",
+  "course": "SKILL",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "vendredi",
+  "time": "12:00",
+  "course": "WOD",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "vendredi",
+  "time": "13:15",
+  "course": "WOD",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "vendredi",
+  "time": "17:15",
+  "course": "SKILL",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "vendredi",
+  "time": "18:30",
+  "course": "WOD",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "vendredi",
+  "time": "19:45",
+  "course": "WOD",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "samedi",
+  "time": "09:30",
+  "course": "SKILL",
+  "coach": "Marvin"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "samedi",
+  "time": "10:45",
+  "course": "SKILL",
+  "coach": "Matéo"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "samedi",
+  "time": "12:00",
+  "course": "SKILL",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "samedi",
+  "time": "16:00",
+  "course": "SKILL",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "dimanche",
+  "time": "09:30",
+  "course": "SKILL",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "dimanche",
+  "time": "10:45",
+  "course": "SKILL",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "dimanche",
+  "time": "12:00",
+  "course": "WOD",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "dimanche",
+  "time": "16:00",
+  "course": "WOD",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "dimanche",
+  "time": "17:15",
+  "course": "WOD",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "Training Gym",
+  "day": "dimanche",
+  "time": "18:30",
+  "course": "SKILL",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "lundi",
+  "time": "17:15",
+  "course": "BOXING BAG",
+  "coach": "Hugo"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "lundi",
+  "time": "18:30",
+  "course": "BOXING BAG",
+  "coach": "Hugo"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "lundi",
+  "time": "19:45",
+  "course": "BOXING BAG",
+  "coach": "Hugo"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "lundi",
+  "time": "21:00",
+  "course": "BOXING BAG",
+  "coach": "Hugo"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "mercredi",
+  "time": "07:00",
+  "course": "BOXING BAG",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "mercredi",
+  "time": "08:15",
+  "course": "BOXING BAG",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "jeudi",
+  "time": "12:00",
+  "course": "BOXING BAG",
+  "coach": "Krimo"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "jeudi",
+  "time": "13:15",
+  "course": "BOXING BAG",
+  "coach": "Krimo"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "vendredi",
+  "time": "07:00",
+  "course": "BOXING BAG",
+  "coach": "Krimo"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "vendredi",
+  "time": "08:15",
+  "course": "BOXING BAG",
+  "coach": "Krimo"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "vendredi",
+  "time": "09:30",
+  "course": "BOXING BAG",
+  "coach": "Krimo"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "vendredi",
+  "time": "16:00",
+  "course": "BOXING BAG",
+  "coach": "Mino"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "vendredi",
+  "time": "17:15",
+  "course": "BOXING BAG",
+  "coach": "Mino"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "vendredi",
+  "time": "18:30",
+  "course": "BOXING BAG",
+  "coach": "Mino"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "vendredi",
+  "time": "19:45",
+  "course": "BOXING BAG",
+  "coach": "Mino"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "dimanche",
+  "time": "14:45",
+  "course": "BOXING BAG",
+  "coach": "Hugo"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "dimanche",
+  "time": "16:00",
+  "course": "BOXING BAG",
+  "coach": "Hugo"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "dimanche",
+  "time": "17:15",
+  "course": "BOXING BAG",
+  "coach": "Hugo"
+ },
+ {
+  "studio": "Boxing Studio",
+  "day": "dimanche",
+  "time": "18:30",
+  "course": "BOXING BAG",
+  "coach": "Hugo"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "lundi",
+  "time": "09:30",
+  "course": "BODY BALANCE",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "lundi",
+  "time": "10:45",
+  "course": "BODY BALANCE",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "lundi",
+  "time": "12:00",
+  "course": "CORE",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "lundi",
+  "time": "13:15",
+  "course": "CORE",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "lundi",
+  "time": "16:00",
+  "course": "CORE",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mardi",
+  "time": "09:30",
+  "course": "CORE",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mardi",
+  "time": "10:45",
+  "course": "CORE",
+  "coach": "Benjamin"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mardi",
+  "time": "12:00",
+  "course": "PILATES",
+  "coach": "Manon"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mardi",
+  "time": "13:15",
+  "course": "PILATES",
+  "coach": "Manon"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mardi",
+  "time": "16:00",
+  "course": "BODY BALANCE",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mardi",
+  "time": "17:15",
+  "course": "BODY BALANCE",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mardi",
+  "time": "18:30",
+  "course": "BODY BALANCE",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mardi",
+  "time": "19:45",
+  "course": "CORE",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mardi",
+  "time": "21:00",
+  "course": "CORE",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mercredi",
+  "time": "09:30",
+  "course": "PILATES",
+  "coach": "Sylvie"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mercredi",
+  "time": "10:45",
+  "course": "PILATES",
+  "coach": "Sylvie"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mercredi",
+  "time": "12:00",
+  "course": "YOGA",
+  "coach": "Sylvie"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mercredi",
+  "time": "13:15",
+  "course": "YOGA",
+  "coach": "Sylvie"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mercredi",
+  "time": "17:15",
+  "course": "CORE",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mercredi",
+  "time": "18:30",
+  "course": "CORE",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mercredi",
+  "time": "19:45",
+  "course": "CORE",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "mercredi",
+  "time": "21:00",
+  "course": "CORE",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "jeudi",
+  "time": "07:00",
+  "course": "CORE",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "jeudi",
+  "time": "08:15",
+  "course": "CORE",
+  "coach": "Samir"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "jeudi",
+  "time": "09:30",
+  "course": "BODY BALANCE",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "jeudi",
+  "time": "10:45",
+  "course": "BODY BALANCE",
+  "coach": "Alexis"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "jeudi",
+  "time": "16:00",
+  "course": "PILATES",
+  "coach": "Sylvie"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "jeudi",
+  "time": "17:15",
+  "course": "PILATES",
+  "coach": "Sylvie"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "jeudi",
+  "time": "18:30",
+  "course": "YOGA",
+  "coach": "Sylvie"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "jeudi",
+  "time": "19:45",
+  "course": "YOGA",
+  "coach": "Sylvie"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "jeudi",
+  "time": "21:00",
+  "course": "BODY BALANCE",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "vendredi",
+  "time": "10:45",
+  "course": "BODY BALANCE",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "vendredi",
+  "time": "12:00",
+  "course": "BODY BALANCE",
+  "coach": "Arnaud"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "vendredi",
+  "time": "13:15",
+  "course": "BODY BALANCE",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "samedi",
+  "time": "09:30",
+  "course": "CORE",
+  "coach": "Vincent"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "samedi",
+  "time": "10:45",
+  "course": "BODY BALANCE",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "samedi",
+  "time": "12:00",
+  "course": "BODY BALANCE",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "samedi",
+  "time": "14:45",
+  "course": "PILATES",
+  "coach": "Sylvie"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "samedi",
+  "time": "16:00",
+  "course": "PILATES",
+  "coach": "Sylvie"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "samedi",
+  "time": "17:15",
+  "course": "CORE",
+  "coach": "Alice"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "dimanche",
+  "time": "09:30",
+  "course": "CORE",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "dimanche",
+  "time": "10:45",
+  "course": "BODY BALANCE",
+  "coach": "Lucas"
+ },
+ {
+  "studio": "Core Studio",
+  "day": "dimanche",
+  "time": "12:00",
+  "course": "BODY BALANCE",
+  "coach": "Vincent"
+ }
+]
