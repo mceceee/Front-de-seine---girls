@@ -525,7 +525,7 @@ function recommend(lock,me){
 
 /* ---------- Rendu ---------- */
 const CATLBL={force:'Force',cardio:'Cardio',mobilite:'Mobilité'};
-const TABS=[['semaine','Semaine'],['planning','Planning'],['dispos','Dispos'],['idees','Idées']];
+const TABS=[['semaine','Semaine'],['planning','Training'],['dispos','Dispos'],['idees','Idées']];
 const ICON={
   semaine:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="4"/><path d="M8 3v4M16 3v4M8.5 13.5l2.5 2.5 4.5-5"/></svg>',
   planning:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h10"/></svg>',
@@ -746,7 +746,7 @@ function fixRows(pick){return catsByWeek(c=>pick[c]&&pick[c].s).filter(([c])=>pi
 
 function renderPlanning(){
   const all=candidates(),plan=week().plan||{},inPlan=new Set(Object.values(plan));
-  let h=`<section class="blk"><div class="hd"><h2>Planning</h2>
+  let h=`<section class="blk"><div class="hd"><h2>Team training</h2>
     <span class="seg" role="group" aria-label="Catégorie">${[['all','Tout']].concat(CATS).map(([k,l])=>
       `<button data-act="cat" data-v="${k}" aria-pressed="${ui.cat===k}">${l}</button>`).join('')}</span>
     <label class="toggle"><input type="checkbox" id="together" data-act="together" ${ui.together?'checked':''}> À trois seulement</label></div>
