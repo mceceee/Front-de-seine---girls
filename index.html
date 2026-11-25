@@ -121,7 +121,8 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .dayadd{flex:1;min-height:132px;width:100%;border:1.5px dashed transparent;border-radius:16px;background:none;color:transparent;font-size:28px;font-weight:300;line-height:1;display:flex;align-items:center;justify-content:center}
 .dayadd:hover,.dayadd:focus-visible{border-color:rgba(255,255,255,.38);background:rgba(255,255,255,.07);color:var(--fg)}
 .dayadd:active{background:rgba(255,255,255,.13)}
-.cards{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cards{display:flex;flex-direction:column;gap:8px;min-width:0;flex:1}
+.week7:not(.list) .cards>.sess{flex:1;justify-content:flex-start}
 .chipsrow{display:flex;flex-wrap:wrap;gap:5px}
 .chipbtn{border:0;background:var(--fill2);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;color:var(--t2);font-variant-numeric:tabular-nums}
 .chipbtn:disabled{opacity:.3;cursor:not-allowed}
