@@ -799,19 +799,24 @@ const PARTS=[['all','Tout'],['am','Matin'],['pm','Aprem'],['eve','Soirée']];
 const inPart=(min,p)=>p==='am'?min<720:p==='pm'?min>=720&&min<1020:p==='eve'?min>=1020:true;
 const PARTLBL={am:'Matin',pm:'Après-midi',eve:'Soirée'};
 /* Filtres à choix multiples : un menu par critère pour en ajouter, une pastille avec croix par filtre actif. */
-function rfState(cat){const f=ui.rf||{};return {parts:f.parts||[],cats:f.cats||[cat],clubs:f.clubs||[],who:f.who||[]}}
-function replaceLists(cat,sl){const f=rfState(cat),cats=f.cats.length?f.cats:CATS.map(c=>c[0]);
-  const byTime=(a,b)=>a.s.day-b.s.day||a.s.min-b.s.min||a.s.course.localeCompare(b.s.course)||(a.s.club<b.s.club?-1:1),by=recommend().by;
-  const same=[].concat(...cats.map(c=>by[c])).filter(a=>a.s.id!==sl.id&&a.s.day===sl.day&&!shortOf(a.s,a.w)
-    &&(!f.parts.length||f.parts.some(p=>inPart(a.s.min,p)))&&(!f.clubs.length||f.clubs.includes(a.s.club))&&f.who.every(p=>a.w.some(x=>x.p===p&&x.ok))).sort(byTime);
-  const other=by[cat].filter(a=>a.s.id!==sl.id&&a.s.course===sl.course&&a.s.day!==sl.day&&!dayTaken(cat,a.s.day)&&!shortOf(a.s,a.w)).sort(byTime);
+/* La catégorie cochée par défaut : celle de la séance ouverte ; aucune dans la fenêtre d'un jour. */
+function rfBase(){const sl=dlgSlot&&slotById(dlgSlot);return sl?sl.cat:null}
+function rfMatch(f,x,w){return (!f.parts.length||f.parts.some(p=>inPart(x.min,p)))&&(!f.cats.length||f.cats.includes(x.cat))&&(!f.clubs.length||f.clubs.includes(x.club))&&f.who.every(p=>w.some(y=>y.p===p&&y.ok))}
+function filterBar(f){
   const DEF={parts:['Heure',Object.entries(PARTLBL)],cats:['Catégorie',CATS],clubs:['Lieu',[['auteuil','Auteuil'],['beaugrenelle','Beaugrenelle']]],who:['Dispo',PEOPLE.map(p=>[p,pname(p)])]};
   const open=ui.rfOpen,draft=ui.rfDraft||[];
   const pill=k=>`<button class="fpill ${f[k].length?'on':''}" data-act="rfopen" data-k="${k}" aria-expanded="${open===k}">${DEF[k][0]}${f[k].length?`<span class="fcount">${f[k].length}</span>`:''}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${open===k?'M6 14.5l6-6 6 6':'M6 9.5l6 6 6-6'}"/></svg></button>`;
   const panel=open?`<div class="fpanel" role="group" aria-label="${DEF[open][0]}">${DEF[open][1].map(([v,l])=>`<button class="frow" data-act="rftog" data-v="${v}" aria-pressed="${draft.includes(v)}"><span class="frl">${open==='who'?av(v,'on'):''}${esc(l)}</span>${draft.includes(v)?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':''}</button>`).join('')}
       <div class="ffoot"><button class="btn ghost sm" data-act="rfclear">Effacer</button><button class="btn sm" data-act="rfsave">Enregistrer</button></div></div>`:'';
+  return `<div class="filters2">${pill('parts')}${pill('cats')}${pill('clubs')}${pill('who')}</div>${panel}`}
+function rfState(cat){const f=ui.rf||{};return {parts:f.parts||[],cats:f.cats||(cat?[cat]:[]),clubs:f.clubs||[],who:f.who||[]}}
+function replaceLists(cat,sl){const f=rfState(cat),cats=f.cats.length?f.cats:CATS.map(c=>c[0]);
+  const byTime=(a,b)=>a.s.day-b.s.day||a.s.min-b.s.min||a.s.course.localeCompare(b.s.course)||(a.s.club<b.s.club?-1:1),by=recommend().by;
+  const same=[].concat(...cats.map(c=>by[c])).filter(a=>a.s.id!==sl.id&&a.s.day===sl.day&&!shortOf(a.s,a.w)
+    &&(!f.parts.length||f.parts.some(p=>inPart(a.s.min,p)))&&(!f.clubs.length||f.clubs.includes(a.s.club))&&f.who.every(p=>a.w.some(x=>x.p===p&&x.ok))).sort(byTime);
+  const other=by[cat].filter(a=>a.s.id!==sl.id&&a.s.course===sl.course&&a.s.day!==sl.day&&!dayTaken(cat,a.s.day)&&!shortOf(a.s,a.w)).sort(byTime);
   return `<div class="lbl">Remplacer par, le même jour</div>
-    <div class="filters2">${pill('parts')}${pill('cats')}${pill('clubs')}${pill('who')}</div>${panel}
+    ${filterBar(f)}
     ${same.length?`<div class="alts">${same.map(a=>altRow(a,a.s.cat,cat)).join('')}</div>`:`<p class="none">Aucun cours ne correspond à ces filtres ce jour-là.</p>`}
     ${cats.some(c=>c!==cat)?`<p class="none">Choisir un cours d’une autre catégorie remplace cette séance ${CATLBL[cat]}.</p>`:''}
     ${other.length?`<div class="lbl">${esc(sl.course)} un autre jour</div><div class="alts">${other.map(a=>altRow(a,cat)).join('')}</div>`:''}`}
@@ -948,15 +953,13 @@ function renderDlg(){
       <div class="lbl">Salle</div><div class="chipsrow">${['auteuil','beaugrenelle'].map(c=>`<button class="chipbtn" data-act="gymclub" data-v="${c}" aria-pressed="${g.club===c}">${CLUBS[c]}</button>`).join('')}</div>
       <div class="lbl">Qui vient</div><div class="chipsrow">${PEOPLE.map(p=>`<button class="chipbtn" data-act="gympers" data-v="${p}" aria-pressed="${!!g.who[p]}">${esc(pname(p))}</button>`).join('')}</div>
       <button class="btn" data-act="gymsave" ${PEOPLE.some(p=>g.who[p])?'':'disabled'}>Ajouter à notre semaine</button></div>`;return}
-  if(dlgPick){const {d,b}=dlgPick;
-    const list=c=>clubSlots(c).filter(x=>x.day===d&&x.band===b&&x.cat).map(x=>`<button class="alt ${isPinned(x)?'cur':''}" data-act="pin" data-id="${x.id}"><span class="aw"><b>${hhmm(x.time)}</b>${courseTag(x.course)}</span><span class="lbl">${esc(x.coach.split(' · ')[0])}</span></button>`).join('');
-    const A=list('auteuil'),B=list('beaugrenelle'),X=WEEKDATA[ui.week]?list('inconnu'):'';
-    box.innerHTML=`<div class="dlg"><div class="dh2"><div><h3>${DAYS[d]} ${keyDate(ui.week,d).getDate()}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
-      <div class="chipsrow">${(bs=>BANDS.map((t,i)=>`<button class="chipbtn" data-act="pickband" data-v="${i}" aria-pressed="${i===b}" ${bs.has(i)?'':'disabled'}>${t.split(' ')[0]}</button>`).join(''))(bandsWith(d))}</div>
-      <div class="row between"><span class="lbl">Lieu</span><span class="seg sm" role="group" aria-label="Lieu">${[['','Les deux'],['auteuil','Auteuil'],['beaugrenelle','Beaugrenelle']].map(([k,l])=>`<button data-act="place" data-d="${d}" data-b="${b}" data-v="${k}" aria-pressed="${(lieuAt(d,b)||'')===k}">${l}</button>`).join('')}</span></div>
-      <div class="lbl">Ou un cours précis</div>
-      ${A?`<div class="lbl">Auteuil</div><div class="alts">${A}</div>`:''}${B?`<div class="lbl">Beaugrenelle</div><div class="alts">${B}</div>`:''}${X?`<div class="lbl">Club à voir sur l’appli FDS</div><div class="alts">${X}</div>`:''}${A||B||X?'':'<p class="none">Aucun cours sur ce créneau.</p>'}
-      <button class="btn ghost sm" data-act="resetcell" data-d="${d}" data-b="${b}" ${cellPins(d,b).length||lieuAt(d,b)?'':'disabled'}>Réinitialiser ce créneau</button></div>`;return}
+  if(dlgPick){const {d}=dlgPick,f=rfState(null),pinsDay=CATS.some(([c])=>{const x=(week().pins||{})[c]&&slotById(week().pins[c]);return x&&x.day===d});
+    const all=[].concat(clubSlots('auteuil'),clubSlots('beaugrenelle'),WEEKDATA[ui.week]?clubSlots('inconnu'):[]).filter(x=>x.day===d&&x.cat).map(x=>({s:x,w:who(x)})).filter(a=>rfMatch(f,a.s,a.w))
+      .sort((a,b)=>a.s.min-b.s.min||a.s.course.localeCompare(b.s.course)||(a.s.club<b.s.club?-1:1));
+    box.innerHTML=`<div class="dlg"><div class="dh2"><div><span class="lbl">Choisir un cours</span><h3>${DAYS[d]} ${keyDate(ui.week,d).getDate()}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
+      ${filterBar(f)}
+      ${all.length?`<div class="alts">${all.map(a=>`<button class="alt ${isPinned(a.s)?'cur':''}" data-act="pin" data-id="${a.s.id}"><span class="aw"><b>${hhmm(a.s.time)}</b>${courseTag(a.s.course)}<span class="lbl">${clubNote(a.s)}</span></span>${avs(a.w)}</button>`).join('')}</div>`:`<p class="none">Aucun cours ne correspond à ces filtres ce jour-là.</p>`}
+      ${pinsDay?`<button class="btn ghost sm" data-act="resetcell" data-d="${d}">Ne plus imposer de cours ce jour-là</button>`:''}</div>`;return}
   if(dlgCat){box.innerHTML=`<div class="dlg"><div class="dh2"><h3>Ajouter un cours ${CATLBL[dlgCat]}</h3><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>${altList(dlgCat,null,6)}</div>`;return}
   const s=slotById(dlgSlot);if(!s){closeDlg();return}
   const w=s.gym?gymWho(s):who(s),plan=week().plan||{},inPlan=s.cat&&plan[s.cat]===s.id,booked=(week().booked||{})[s.id]||{},b=booking(s),anyBk=PEOPLE.some(p=>booked[p]),isGym=!!s.gym,inv=((week().invites||{})[s.id]||{}).to||{},solos=soloList().filter(o=>o.s.id===s.id),pk=planState().pick,forMe=!!(ui.me&&s.cat&&!inPlan&&pk[s.cat]&&!pk[s.cat].w.some(x=>x.p===ui.me&&x.ok)&&((week().solo||{})[ui.me]||{})[s.cat]!==s.id&&w.some(x=>x.p===ui.me&&x.ok)),done=inPlan&&isDone(ui.week,s),seen=isDone(shiftWeek(ui.week,-1),s);
@@ -1004,7 +1007,7 @@ function saveAvail(p,a,m,type){
   else save('profiles/'+p,{avail:a,modes:m})}
 
 /* La liste d'un filtre est-elle inchangée par rapport à ce qui est appliqué ? */
-function rfUnchanged(){const sl=slotById(dlgSlot);if(!sl||!ui.rfOpen)return true;const cur=rfState(sl.cat)[ui.rfOpen],d=ui.rfDraft||[];return cur.length===d.length&&cur.every(x=>d.includes(x))}
+function rfUnchanged(){if(!ui.rfOpen)return true;const cur=rfState(rfBase())[ui.rfOpen],d=ui.rfDraft||[];return cur.length===d.length&&cur.every(x=>d.includes(x))}
 document.addEventListener('click',e=>{
   if(lpDone){lpDone=false;return}
   /* Liste de filtre ouverte : un clic en dehors la referme si rien n'a été modifié. */
@@ -1035,16 +1038,16 @@ document.addEventListener('click',e=>{
   else if(a==='scope'){ui.scope=v}
   else if(a==='swap'){ui.swap=ui.swap===v?null:v}
   else if(a==='showall'){ui.showAll=true}
-  else if(a==='rfopen'){const sl=slotById(dlgSlot),k=el.dataset.k;if(sl){if(ui.rfOpen===k){ui.rfOpen=null}else{ui.rfOpen=k;ui.rfDraft=rfState(sl.cat)[k].slice()}renderDlg()}return}
+  else if(a==='rfopen'){const k=el.dataset.k;if(ui.rfOpen===k){ui.rfOpen=null}else{ui.rfOpen=k;ui.rfDraft=rfState(rfBase())[k].slice()}renderDlg();return}
   else if(a==='rftog'){const d=ui.rfDraft||[];ui.rfDraft=d.includes(v)?d.filter(x=>x!==v):d.concat(v);renderDlg();return}
   else if(a==='rfclear'){ui.rfDraft=[];renderDlg();return}
-  else if(a==='rfsave'){const sl=slotById(dlgSlot);if(sl&&ui.rfOpen){const f=rfState(sl.cat);f[ui.rfOpen]=(ui.rfDraft||[]).slice();ui.rf=f}ui.rfOpen=null;renderDlg();return}
+  else if(a==='rfsave'){if(ui.rfOpen){const f=rfState(rfBase());f[ui.rfOpen]=(ui.rfDraft||[]).slice();ui.rf=f}ui.rfOpen=null;renderDlg();return}
   else if(a==='slot'){ui.rf=null;ui.rfOpen=null;dlgSlot=el.dataset.id;dlgCat=null;openDlg();return}
   else if(a==='pin'){const sl=slotById(el.dataset.id),patch={pins:{[sl.cat]:sl.id}};if(week().plan){patch.plan={[sl.cat]:sl.id};patch.by={[sl.cat]:ui.me||null}}
     save(weekPath(),patch);closeDlg();ui.tab='semaine';toast(sl.course+' de '+DAYS[sl.day].toLowerCase()+' choisi pour la semaine du '+dayLabel(ui.week,0)+'.')}
   else if(a==='place'){save(weekPath(),{lieu:{[el.dataset.d+'-'+el.dataset.b]:v||null}})}
-  else if(a==='resetcell'){const d=+el.dataset.d,b=+el.dataset.b,patch={lieu:{[d+'-'+b]:null},pins:{}};cellPins(d,b).forEach(c=>patch.pins[c]=null);
-    save(weekPath(),patch);closeDlg();toast('Créneau réinitialisé.')}
+  else if(a==='resetcell'){const d=+el.dataset.d,patch={pins:{},lieu:{}},pins=week().pins||{};CATS.forEach(([c])=>{const x=pins[c]&&slotById(pins[c]);if(x&&x.day===d)patch.pins[c]=null});
+    for(let b=0;b<NB;b++)patch.lieu[d+'-'+b]=null;save(weekPath(),patch);closeDlg();toast('C’est remis à zéro pour ce jour.')}
   else if(a==='asklater'){try{localStorage.setItem('fds:html:'+v,fmtKey(today0()))}catch(x){}closeDlg();return}
   else if(a==='askdone'){try{localStorage.setItem('fds:html:'+v,'done')}catch(x){}closeDlg();toast('Merci ! Claude met le planning à jour.');return}
   else if(a==='daypick'){pickFrom({d:+v,b:dayBand(+v)});return}
@@ -1116,9 +1119,9 @@ let lpT=null,lpDone=false;
 function bandsWith(d){const set=new Set();['auteuil','beaugrenelle','inconnu'].forEach(c=>clubSlots(c).forEach(x=>{if(x.day===d&&x.cat)set.add(x.band)}));return set}
 function dayBand(d){const bs=[...bandsWith(d)].sort((a,b)=>Math.abs(a-6)-Math.abs(b-6));return bs.length?bs[0]:6}
 function pickTarget(e){const t=e.target;if(!t.closest)return null;
-  const c=t.closest('.cell');if(c)return c.dataset.t==='1'?null:{d:+c.dataset.d,b:+c.dataset.b};
+  const c=t.closest('.cell');if(c)return c.dataset.t==='1'?null:{d:+c.dataset.d,b:+c.dataset.b,cell:true};
   return null}
-function pickFrom(p){dlgPick=p;dlgSlot=null;dlgCat=null;dlgGym=null;dlgType=null;openDlg()}
+function pickFrom(p){ui.rfOpen=null;ui.rf=p.cell?{parts:[p.b<=2?'am':p.b<=4?'pm':'eve']}:null;dlgPick=p;dlgSlot=null;dlgCat=null;dlgGym=null;dlgType=null;openDlg()}
 document.addEventListener('contextmenu',e=>{const p=pickTarget(e);if(!p)return;e.preventDefault();pickFrom(p)});
 document.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;const p=pickTarget(e);if(!p)return;
   lpDone=false;clearTimeout(lpT);lpT=setTimeout(()=>{lpDone=true;pickFrom(p)},550)});
