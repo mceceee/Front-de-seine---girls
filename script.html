@@ -211,7 +211,7 @@ function scoreSlot(s,prevPlan){
 function recommend(lock,me){
   const prevPlan=week(shiftWeek(ui.week,-1)).plan||null;
   const by={};CATS.forEach(([c])=>by[c]=[]);
-    candidates().forEach(s=>{if(!s.cat)return;const r=scoreSlot(s,prevPlan);if(r&&r.n>=1)by[s.cat].push(r)});
+    candidates().forEach(s=>{if(!s.cat)return;const r=scoreSlot(s,prevPlan);if(r&&r.n>=1&&(!me||r.w.some(x=>x.p===me&&x.ok)))by[s.cat].push(r)});
   CATS.forEach(([c])=>{by[c].sort((a,b)=>b.sc-a.sc)});
   const top={},pins=week().pins||{},pinned={};
   CATS.forEach(([c])=>{const fid=(lock&&lock[c])||pins[c],ps=fid&&slotById(fid);let pr=ps&&scoreSlot(ps,prevPlan);
@@ -407,7 +407,7 @@ function resetWho(){return ui.tab==='dispos'?ui.edit:(ui.me||ui.edit)}
 function armBtn(key,label,dis){const on=ui.arm===key;
   return `<button class="btn sm ${on?'danger':'ghost'}" data-act="arm" data-v="${key}" ${dis||''}>${on?'Confirmer : tout effacer':label}</button>`}
 function renderSemaine(){
-  const st=planState(),{plans}=recommend(st.lock,ui.me),wk=week(),gyms=gymList();
+  const st=planState(),{plans,by}=recommend(st.lock,ui.me),wk=week(),gyms=gymList();
   let h=Store.ready?confirmBanner():'';
   const inv=ui.me?inviteRows(ui.me):'';
   if(inv)h+=`<div class="rbs invite">${inv}</div>`;
@@ -419,6 +419,8 @@ function renderSemaine(){
   const options=[],seen={};
   const hide=!!wk.hideOpts;
   if(!hide)st.miss.forEach(([c])=>plans.forEach(pl=>{const r=pl.pick[c];if(r&&!seen[r.s.id]){seen[r.s.id]=1;options.push({c,r})}}));
+  /* Pas assez de jours pour un trio complet : on propose quand même les meilleurs cours de chaque catégorie manquante. */
+  if(!hide&&!options.length)st.miss.forEach(([c])=>by[c].filter(r=>!dayTaken(c,r.s.day)).slice(0,3).forEach(r=>{if(!seen[r.s.id]){seen[r.s.id]=1;options.push({c,r})}}));
   h+=`<section class="blk"><div class="hd"><h2>Notre semaine</h2>
       ${st.miss.length?`<button class="btn ghost sm" data-act="toggleopts">${hide?'Afficher les options':'Masquer les options'}</button>`:''}
       <button class="btn ghost sm" data-act="gymadd">Ajouter une séance de salle</button></div>
@@ -575,10 +577,10 @@ function render(){
   const sel=keep==='nameInput'?[document.activeElement.selectionStart,document.activeElement.selectionEnd,document.activeElement.value]:null;
   document.getElementById('app').innerHTML=ui.tab==='planning'?renderPlanning():ui.tab==='dispos'?renderDispos():ui.tab==='idees'?renderIdees():renderSemaine();
   if(keep){const el=document.getElementById(keep);if(el){if(sel){el.value=sel[2];}el.focus();if(sel)try{el.setSelectionRange(sel[0],sel[1])}catch(e){}}}
-  if(dlgSlot||dlgCat||dlgPick||dlgGym||dlgType||dlgAsk)renderDlg();
+  if(dlgSlot||dlgCat||dlgPick||dlgGym||dlgType||dlgAsk||dlgInv)renderDlg();
   maybeAsk()}
 
-let dlgSlot=null,dlgCat=null,dlgPick=null,dlgGym=null,dlgType=null,dlgAsk=null,askShown=false;
+let dlgSlot=null,dlgCat=null,dlgPick=null,dlgGym=null,dlgType=null,dlgAsk=null,dlgInv=null,askShown=false;
 /* Rappel pour Cece seulement : envoyer à Claude la page HTML du planning de la semaine à préparer
    (celle qui commence dans 7 à 8 jours ; avant, la prochaine si elle n'a pas encore été mise à jour). */
 function askWeek(){const n=today0(),next=mondayKey(new Date(n.getFullYear(),n.getMonth(),n.getDate()+7)),far=mondayKey(new Date(n.getFullYear(),n.getMonth(),n.getDate()+8));
@@ -589,6 +591,15 @@ function maybeAsk(){if(askShown||ui.me!=='p1'||!Store.ready||dlgSlot||dlgCat||dl
 function renderDlg(){
   const box=document.getElementById('dlg');
   box.classList&&box.classList.toggle('wide',!!dlgType);
+  if(dlgInv){const sl=slotById(dlgInv);if(!sl){closeDlg();return}
+    const w=who(sl),inv=((week().invites||{})[sl.id]||{}).to||{};
+    box.innerHTML=`<div class="dlg c-${sl.cat}"><div class="dh2"><div><span class="lbl" style="color:var(--green)">Ajouté à ta semaine</span><h3>${esc(whenTxt(sl))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
+      <p class="meta">${courseTag(sl.course)} <b class="club">${CLUBS[sl.club]}</b></p>
+      <h3 style="font-size:17px">Tu invites quelqu’un ?</h3>
+      <div class="people">${w.filter(x=>x.p!==ui.me).map(x=>`<div class="prow2">${av(x.p,x.ok?'bk':'on')}<span class="pn">${esc(pname(x.p))}</span>
+        <span class="ps">${x.ok?'vient déjà':x.pr===0?'n’aime pas ce cours':x.a===0?'pas dispo à cette heure':'dispo'}</span>
+        ${x.ok?'':`<button class="btn sm ${inv[x.p]==='ask'?'':'ghost'}" data-act="invite" data-id="${sl.id}" data-p="${x.p}">${inv[x.p]==='ask'?'Invitée ✓':'Inviter'}</button>`}</div>`).join('')}</div>
+      <button class="btn" data-act="closedlg">${Object.values(inv).includes('ask')?'Terminé':'Non, juste moi'}</button></div>`;return}
   if(dlgAsk){const w=dlgAsk;
     box.innerHTML=`<div class="dlg"><div class="dh2"><div><span class="lbl">Rappel pour Cece</span><h3>Planning de la semaine du ${esc(dayLabel(w,0))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
       <p class="meta">${WEEKDATA[w]?'Ce planning a été relevé en avance : renvoie la page à Claude pour vérifier que rien n’a changé.':'Envoie à Claude la page du club pour cette semaine, en HTML.'}</p>
@@ -648,8 +659,8 @@ function renderDlg(){
     ${forMe?`<button class="btn" data-act="solo" data-p="${ui.me}" data-cat="${s.cat}" data-id="${s.id}">Retenir pour ${esc(pname(ui.me))}</button>`:''}
     ${inPlan||forMe?'':s.cat?`<button class="btn" data-act="setplan" data-cat="${s.cat}" data-id="${s.id}">Mettre dans notre semaine</button>`:''}</div>`}
 function openDlg(){renderDlg();const d=document.getElementById('dlg');if(!d.open)d.showModal()}
-function closeDlg(){dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null;const d=document.getElementById('dlg');if(d.open)d.close()}
-document.getElementById('dlg').addEventListener('close',()=>{dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null});
+function closeDlg(){dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null;dlgInv=null;const d=document.getElementById('dlg');if(d.open)d.close()}
+document.getElementById('dlg').addEventListener('close',()=>{dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null;dlgInv=null});
 document.getElementById('dlg').addEventListener('click',e=>{if(e.target&&e.target.id==='dlg'&&!ui.rfOpen)closeDlg()});
 
 let toastT;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},3800)}
@@ -700,7 +711,7 @@ document.addEventListener('click',e=>{
     const patch={plan:{[sl.cat]:sl.id},by:{[sl.cat]:ui.me||null},pins:{[sl.cat]:null}};if(ui.me)patch.go={[sl.id]:{[ui.me]:true}};
     CATS.forEach(([c])=>{const x=c!==sl.cat&&p[c]&&slotById(p[c]);if(x&&x.day===sl.day){patch.plan[c]=null;patch.by[c]=null;patch.pins[c]=null}});
     save(weekPath(),patch);ui.tab='semaine';
-    if(ui.me){dlgPick=null;dlgCat=null;ui.rf=null;ui.rfOpen=null;dlgSlot=sl.id;render();openDlg();toast('Ajouté à ta semaine. Tu peux inviter les autres.');return}
+    if(ui.me){dlgPick=null;dlgCat=null;ui.rf=null;ui.rfOpen=null;dlgSlot=null;dlgInv=sl.id;render();openDlg();return}
     closeDlg();toast(sl.course+' de '+DAYS[sl.day].toLowerCase()+' ajouté à votre semaine.')}
   else if(a==='place'){save(weekPath(),{lieu:{[el.dataset.d+'-'+el.dataset.b]:v||null}})}
   else if(a==='resetcell'){const d=+el.dataset.d,patch={pins:{},lieu:{}},pins=week().pins||{};CATS.forEach(([c])=>{const x=pins[c]&&slotById(pins[c]);if(x&&x.day===d)patch.pins[c]=null});
@@ -752,7 +763,7 @@ document.addEventListener('click',e=>{
   else if(a==='setplan'){const c=el.dataset.cat,rm=el.dataset.rm,patch={plan:{[c]:el.dataset.id},by:{[c]:ui.me||null}};
     if(ui.me)patch.go={[el.dataset.id]:{[ui.me]:true}};
     if(rm&&rm!==c){patch.plan[rm]=null;patch.by[rm]=null;patch.pins={[rm]:null}}
-    save(weekPath(),patch);if(ui.me){dlgCat=null;dlgPick=null;ui.rf=null;ui.rfOpen=null;dlgSlot=el.dataset.id;render();openDlg();toast('Ajouté à ta semaine. Tu peux inviter les autres.');return}
+    save(weekPath(),patch);if(ui.me){dlgCat=null;dlgPick=null;ui.rf=null;ui.rfOpen=null;dlgSlot=null;dlgInv=el.dataset.id;render();openDlg();return}
     if(dlgSlot||dlgCat){closeDlg();toast('Ajouté à votre semaine.')}}
   else if(a==='clearplan'){save(weekPath(),{plan:null,solo:null,out:null,by:null,go:null});ui.swap=null}
   else if(a==='confirm'){const cur=(week().confirmed||{})[ui.edit];save(weekPath(),{confirmed:{[ui.edit]:cur?null:true}});if(!cur)toast('Dispos validées.')}
