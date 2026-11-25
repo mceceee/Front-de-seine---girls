@@ -976,15 +976,15 @@ function maybeAsk(){if(askShown||ui.me!=='p1'||!Store.ready||dlgSlot||dlgCat||dl
 function renderDlg(){
   const box=document.getElementById('dlg');
   box.classList&&box.classList.toggle('wide',!!dlgType);
-  if(dlgInv){const sl=slotById(dlgInv);if(!sl){closeDlg();return}
-    const w=who(sl),inv=((week().invites||{})[sl.id]||{}).to||{};
-    box.innerHTML=`<div class="dlg c-${sl.cat}"><div class="dh2"><div><span class="lbl" style="color:var(--green)">Ajouté à ta semaine</span><h3>${esc(whenTxt(sl))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
+  if(dlgInv){const sl=slotById(dlgInv.id);if(!sl){closeDlg();return}
+    const w=who(sl),inv=dlgInv.inv,n=Object.keys(inv).filter(p=>inv[p]).length;
+    box.innerHTML=`<div class="dlg c-${sl.cat}"><div class="dh2"><div><span class="lbl">Ajouter à ta semaine ?</span><h3>${esc(whenTxt(sl))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Annuler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
       <p class="meta">${courseTag(sl.course)} <b class="club">${CLUBS[sl.club]}</b></p>
       <h3 style="font-size:17px">Tu invites quelqu’un ?</h3>
-      <div class="people">${w.filter(x=>x.p!==ui.me).map(x=>`<div class="prow2">${(free=>`<span title="${esc(pname(x.p))}">${av(x.p,x.ok?'on':inv[x.p]==='ask'?'ask':inv[x.p]==='no'?'no':free?'free':'off')}</span>
-        <span class="ps">${x.ok?'vient déjà':inv[x.p]==='no'?'a décliné':x.pr===0?'n’aime pas ce cours':x.a===0?'pas dispo à cette heure':'dispo'}</span>
-        ${x.ok?'':`<button class="btn sm ${inv[x.p]==='ask'?'':'ghost'}" data-act="invite" data-id="${sl.id}" data-p="${x.p}" ${free?'':'disabled'}>${inv[x.p]==='ask'?'Invitée ✓':'Inviter'}</button>`}`)(x.a>0&&x.pr>0)}</div>`).join('')}</div>
-      <button class="btn" data-act="closedlg">${Object.values(inv).includes('ask')?'Terminé':'Non, juste moi'}</button></div>`;return}
+      <div class="people">${w.filter(x=>x.p!==ui.me).map(x=>`<div class="prow2">${(free=>`<span title="${esc(pname(x.p))}">${av(x.p,inv[x.p]?'ask':free?'free':'off')}</span>
+        <span class="ps">${x.pr===0?'n’aime pas ce cours':x.a===0?'pas dispo à cette heure':'dispo'}</span>
+        <button class="btn sm ${inv[x.p]?'':'ghost'}" data-act="invpick" data-p="${x.p}" ${free?'':'disabled'}>${inv[x.p]?'Invitée ✓':'Inviter'}</button>`)(x.a>0&&x.pr>0)}</div>`).join('')}</div>
+      <div class="row between"><button class="btn ghost" data-act="closedlg">Annuler</button><button class="btn" data-act="invconfirm">${n?'Ajouter et inviter':'Ajouter, juste moi'}</button></div></div>`;return}
   if(dlgAsk){const w=dlgAsk;
     box.innerHTML=`<div class="dlg"><div class="dh2"><div><span class="lbl">Rappel pour Cece</span><h3>Planning de la semaine du ${esc(dayLabel(w,0))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
       <p class="meta">${WEEKDATA[w]?'Ce planning a été relevé en avance : renvoie la page à Claude pour vérifier que rien n’a changé.':'Envoie à Claude la page du club pour cette semaine, en HTML.'}</p>
@@ -1086,6 +1086,10 @@ document.addEventListener('click',e=>{
   else if(a==='scope'){ui.scope=v}
   else if(a==='swap'){ui.swap=ui.swap===v?null:v}
   else if(a==='showall'){ui.showAll=true}
+  else if(a==='invpick'){if(dlgInv){dlgInv.inv[el.dataset.p]=!dlgInv.inv[el.dataset.p];renderDlg()}return}
+  else if(a==='invconfirm'){if(dlgInv){const d=dlgInv,to={};Object.keys(d.inv).forEach(p=>{if(d.inv[p])to[p]='ask'});
+      const patch=d.patch;if(Object.keys(to).length)patch.invites={[d.id]:{from:ui.me,to}};
+      save(weekPath(),patch);const sl=slotById(d.id);closeDlg();toast((sl?sl.course+' de '+DAYS[sl.day].toLowerCase():'Cours')+' ajouté à ta semaine.')}}
   else if(a==='rfshow'){ui.rfShow=!ui.rfShow;ui.rfOpen=null;renderDlg();return}
   else if(a==='rfopen'){const k=el.dataset.k;if(ui.rfOpen===k){ui.rfOpen=null}else{ui.rfOpen=k;ui.rfDraft=rfState(rfBase())[k].slice()}renderDlg();return}
   else if(a==='rftog'){const d=ui.rfDraft||[];ui.rfDraft=d.includes(v)?d.filter(x=>x!==v):d.concat(v);renderDlg();return}
@@ -1096,9 +1100,9 @@ document.addEventListener('click',e=>{
     /* Un cours choisi à la main va directement dans la semaine. Un seul cours par jour : il remplace celui du même jour. */
     const patch={plan:{[sl.cat]:sl.id},by:{[sl.cat]:ui.me||null},pins:{[sl.cat]:null}};if(ui.me)patch.go={[sl.id]:{[ui.me]:true}};
     CATS.forEach(([c])=>{const x=c!==sl.cat&&p[c]&&slotById(p[c]);if(x&&x.day===sl.day){patch.plan[c]=null;patch.by[c]=null;patch.pins[c]=null}});
-    save(weekPath(),patch);ui.tab='semaine';
-    if(ui.me){dlgPick=null;dlgCat=null;ui.rf=null;ui.rfOpen=null;dlgSlot=null;dlgInv=sl.id;render();openDlg();return}
-    closeDlg();toast(sl.course+' de '+DAYS[sl.day].toLowerCase()+' ajouté à votre semaine.')}
+    ui.tab='semaine';
+    if(ui.me){dlgPick=null;dlgCat=null;ui.rf=null;ui.rfOpen=null;dlgSlot=null;dlgInv={id:sl.id,patch,inv:{}};render();openDlg();return}
+    save(weekPath(),patch);closeDlg();toast(sl.course+' de '+DAYS[sl.day].toLowerCase()+' ajouté à votre semaine.')}
   else if(a==='place'){save(weekPath(),{lieu:{[el.dataset.d+'-'+el.dataset.b]:v||null}})}
   else if(a==='resetcell'){const d=+el.dataset.d,patch={pins:{},lieu:{}},pins=week().pins||{};CATS.forEach(([c])=>{const x=pins[c]&&slotById(pins[c]);if(x&&x.day===d)patch.pins[c]=null});
     for(let b=0;b<NB;b++)patch.lieu[d+'-'+b]=null;save(weekPath(),patch);closeDlg();toast('C’est remis à zéro pour ce jour.')}
@@ -1149,7 +1153,8 @@ document.addEventListener('click',e=>{
   else if(a==='setplan'){const c=el.dataset.cat,rm=el.dataset.rm,patch={plan:{[c]:el.dataset.id},by:{[c]:ui.me||null}};
     if(ui.me)patch.go={[el.dataset.id]:{[ui.me]:true}};
     if(rm&&rm!==c){patch.plan[rm]=null;patch.by[rm]=null;patch.pins={[rm]:null}}
-    save(weekPath(),patch);if(ui.me){dlgCat=null;dlgPick=null;ui.rf=null;ui.rfOpen=null;dlgSlot=null;dlgInv=el.dataset.id;render();openDlg();return}
+    if(ui.me){dlgCat=null;dlgPick=null;ui.rf=null;ui.rfOpen=null;dlgSlot=null;dlgInv={id:el.dataset.id,patch,inv:{}};render();openDlg();return}
+    save(weekPath(),patch);
     if(dlgSlot||dlgCat){closeDlg();toast('Ajouté à votre semaine.')}}
   else if(a==='clearplan'){save(weekPath(),{plan:null,solo:null,out:null,by:null,go:null});ui.swap=null}
   else if(a==='confirm'){const cur=(week().confirmed||{})[ui.edit];save(weekPath(),{confirmed:{[ui.edit]:cur?null:true}});if(!cur)toast('Dispos validées.')}
