@@ -141,6 +141,12 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .sess{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;border-radius:16px;
   padding:11px 10px 11px 12px;background:rgba(255,255,255,.085);overflow:hidden;min-width:0}
 .sess:hover{background:rgba(255,255,255,.15)}
+.sx{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.38);color:#fff;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s,background-color .15s}
+.sx svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
+.sess:hover .sx,.sess:focus-visible .sx{opacity:1}
+.sx:hover{background:rgba(0,0,0,.7)}
+@media (hover:none){.sx{display:none}}
+.surebtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .sess.inv,.sess.inv:hover{background:rgba(201,169,255,.24);box-shadow:inset 0 0 0 2px var(--invite);cursor:default}
 .sess.inv .sc{color:var(--invite);display:inline-flex;align-items:center;gap:5px}
 .sess.inv .sc svg{width:13px;height:13px;stroke-width:2.2}
@@ -736,7 +742,7 @@ function sessionCard(c,r,opts){
     <span class="sc">${CATLBL[c]}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta ${s.club==='inconnu'?'warn':''}">${esc(CLUBS[s.club])}</span>
     <span class="keep">Retenir</span><span class="ss">${r.w.length?'Avec '+esc(r.w.map(x=>pname(x.p)).join(' et ')):r.also&&r.also.length?'Proposé aussi à '+esc(r.also.map(pname).join(' et ')):'Proposé à la place du cours du groupe'}</span></button>`;
-  return `<button class="sess c-${c} ${opts.booked&&!r.away&&shortOf(s,r.w)?'pb':''} ${r.away?'away':''} ${done?'done':''}" ${!opts.booked&&CATLBL[c]?'draggable="true"':''} data-act="slot" data-id="${s.id}">
+  return `<button class="sess c-${c} ${opts.booked&&!r.away&&shortOf(s,r.w)?'pb':''} ${r.away?'away':''} ${done?'done':''}" ${!opts.booked&&CATLBL[c]?'draggable="true"':''} data-act="slot" data-id="${s.id}">${opts.booked&&!done&&!r.away&&!Store.readonly?`<span class="sx" role="button" data-act="cardrm" data-id="${s.id}" title="Retirer" aria-label="Retirer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></span>`:''}
     <span class="sc">${esc(r.label||CATLBL[c]||'Salle')}</span><span class="st">${hhmm(s.time)}</span><span class="sn">${courseTag(s.course)}</span>
     <span class="smeta ${s.club==='inconnu'?'warn':''}">${esc(CLUBS[s.club])}</span>
     ${avs(r.w,bk)}${done?(rebookPending(ui.week,s,r.w.filter(x=>x.ok).map(x=>x.p))?`<span class="ss warn">${ui.me?'Réinscrite ?':'Réinscrites ?'}</span>`:''):settled?'':bookShort(s)}${settled?'':placesTxt(s,r.w)}${opts.booked&&CATLBL[c]&&!r.label&&r.w.some(x=>x.own&&x.ok)&&r.w.filter(x=>x.ok).length===1?`<span class="ss warn">${opts.me&&r.w.some(x=>x.own&&x.p===opts.me)?'Tu es seule pour l’instant':esc(pname(r.w.find(x=>x.own).p))+' est seule pour l’instant'}</span>`:''}${r.away?'<span class="ss">Sans toi</span>':''}</button>`}
@@ -985,17 +991,20 @@ function render(){
   if(dlgSlot||dlgCat||dlgPick||dlgGym||dlgType||dlgAsk||dlgInv)renderDlg();
   maybeAsk()}
 
-let dlgSlot=null,dlgCat=null,dlgPick=null,dlgGym=null,dlgType=null,dlgAsk=null,dlgInv=null,askShown=false;
+let dlgSlot=null,dlgCat=null,dlgPick=null,dlgGym=null,dlgType=null,dlgAsk=null,dlgInv=null,dlgSure=null,askShown=false;
 /* Rappel pour Cece seulement : envoyer à Claude la page HTML du planning de la semaine à préparer
    (celle qui commence dans 7 à 8 jours ; avant, la prochaine si elle n'a pas encore été mise à jour). */
 function askWeek(){const n=today0(),next=mondayKey(new Date(n.getFullYear(),n.getMonth(),n.getDate()+7)),far=mondayKey(new Date(n.getFullYear(),n.getMonth(),n.getDate()+8));
   return !PLANNING_WEEKS.includes(next)?next:!PLANNING_WEEKS.includes(far)?far:null}
-function maybeAsk(){if(askShown||ui.me!=='p1'||!Store.ready||dlgSlot||dlgCat||dlgPick||dlgGym||dlgType)return;const w=askWeek();if(!w)return;
+function maybeAsk(){if(askShown||ui.me!=='p1'||!Store.ready||dlgSure||dlgSlot||dlgCat||dlgPick||dlgGym||dlgType)return;const w=askWeek();if(!w)return;
   let v=null;try{v=localStorage.getItem('fds:html:'+w)}catch(e){}
   if(v==='done'||v===fmtKey(today0()))return;askShown=true;dlgAsk=w;openDlg()}
 function renderDlg(){
   const box=document.getElementById('dlg');
   box.classList&&box.classList.toggle('wide',!!dlgType);
+  if(dlgSure){const q=dlgSure;
+    box.innerHTML=`<div class="dlg sure"><div class="dh2"><div>${q.sub?`<span class="lbl">${esc(q.sub)}</span>`:''}<h3>${esc(q.title)}</h3></div></div>
+      <div class="row between"><button class="btn ghost" data-act="sureno">Annuler</button><span class="surebtns">${q.opts.map((o,i)=>`<button class="btn ${i===q.opts.length-1?'':'ghost'}" data-act="sureyes" data-i="${i}">${esc(o.label)}</button>`).join('')}</span></div></div>`;return}
   if(dlgInv){const sl=slotById(dlgInv.id);if(!sl){closeDlg();return}
     const w=who(sl),inv=dlgInv.inv,n=Object.keys(inv).filter(p=>inv[p]).length;
     box.innerHTML=`<div class="dlg c-${sl.cat}"><div class="dh2"><div><span class="lbl">Ajouter à ta semaine ?</span><h3>${esc(whenTxt(sl))}</h3></div><button class="rnd" data-act="closedlg" aria-label="Annuler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
@@ -1066,8 +1075,27 @@ function renderDlg(){
     ${forMe?`<button class="btn" data-act="solo" data-p="${ui.me}" data-cat="${s.cat}" data-id="${s.id}">Retenir pour ${esc(pname(ui.me))}</button>`:''}
     ${inPlan||forMe?'':s.cat?`<button class="btn" data-act="setplan" data-cat="${s.cat}" data-id="${s.id}">Mettre dans notre semaine</button>`:''}</div>`}
 function openDlg(){renderDlg();const d=document.getElementById('dlg');if(!d.open)d.showModal()}
-function closeDlg(){dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null;dlgInv=null;const d=document.getElementById('dlg');if(d.open)d.close()}
-document.getElementById('dlg').addEventListener('close',()=>{dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null;dlgInv=null});
+/* Tout retrait passe par une confirmation. Renvoie la question à poser, ou null si l'action n'en demande pas. */
+function sureFor(a,ds){const me=ui.me,wk=week();
+  if(a==='cardrm'){const sl=slotById(ds.id);if(!sl)return null;
+    if(sl.gym){const key=sl.id.slice(4),part=gymPart(key)||{},both=me&&part[me]&&PEOPLE.some(q=>q!==me&&part[q]);
+      return {title:'Retirer la séance de salle ?',sub:whenTxt(sl),opts:both?[{label:'Pour toutes',ds:{act:'gymdel',id:sl.id}},{label:'Juste pour toi',ds:{act:'gymwho',id:sl.id,p:me}}]:[{label:'Retirer',ds:{act:'gymdel',id:sl.id}}]}}
+    if(sl.cat&&(wk.plan||{})[sl.cat]===sl.id)return sureFor('unplan',{v:sl.cat});
+    return sureFor('rmask',{id:sl.id})}
+  if(a==='unplan'){const id=(wk.plan||{})[ds.v],sl=id&&slotById(id);if(!sl)return null;const go=(wk.go||{})[id];
+    const both=isObj(go)&&me&&go[me]&&PEOPLE.some(p=>p!==me&&go[p]);
+    return {title:'Retirer '+sl.course+' ?',sub:whenTxt(sl),opts:both?[{label:'Pour toutes',ds:{act:'unplan',v:ds.v,all:'1'}},{label:'Juste pour toi',ds:{act:'unplan',v:ds.v}}]:[{label:'Retirer',ds:{act:'unplan',v:ds.v,all:'1'}}]}}
+  if(a==='rmask'){const id=ds.id||dlgSlot,sl=id&&slotById(id),ss=soloList().filter(o=>o.s.id===id);if(!sl||!ss.length)return null;
+    const both=ss.length>1&&me&&ss.some(o=>o.p===me);
+    return {title:'Retirer '+sl.course+' ?',sub:whenTxt(sl),opts:both?[{label:'Pour toutes',ds:{act:'rmall',id}},{label:'Juste pour toi',ds:{act:'rmme',id}}]:[{label:'Retirer',ds:{act:'rmall',id}}]}}
+  if(a==='gymdel'){const sl=slotById(ds.id);return {title:'Retirer la séance de salle ?',sub:sl?whenTxt(sl):'',opts:[{label:'Retirer',ds:{act:'gymdel',id:ds.id}}]}}
+  if(a==='gymwho'){const part=gymPart(ds.id.slice(4))||{},sl=slotById(ds.id);if(!part[ds.p])return null;
+    return {title:(ds.p===me?'Te retirer':'Retirer '+pname(ds.p))+' de la séance de salle ?',sub:sl?whenTxt(sl):'',opts:[{label:'Retirer',ds:{act:'gymwho',id:ds.id,p:ds.p}}]}}
+  if(a==='unsolo'){const id=((wk.solo||{})[ds.p]||{})[ds.cat],sl=id&&slotById(id);if(!sl)return null;
+    return {title:'Retirer '+sl.course+(ds.p===me?'':' de '+pname(ds.p))+' ?',sub:whenTxt(sl),opts:[{label:'Retirer',ds:{act:'unsolo',p:ds.p,cat:ds.cat}}]}}
+  return null}
+function closeDlg(){dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null;dlgInv=null;dlgSure=null;const d=document.getElementById('dlg');if(d.open)d.close()}
+document.getElementById('dlg').addEventListener('close',()=>{dlgSure=null;dlgSlot=null;dlgCat=null;dlgPick=null;dlgGym=null;dlgType=null;dlgAsk=null;dlgInv=null});
 document.getElementById('dlg').addEventListener('click',e=>{if(e.target&&e.target.id==='dlg'&&!ui.rfOpen)closeDlg()});
 
 let toastT;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},3800)}
@@ -1098,8 +1126,14 @@ document.addEventListener('click',e=>{
     if(ui.menu){ui.menu=false;renderTop()}}
   if(!e.target.closest('[data-act]')){const dc=e.target.closest('.week7.pickable .day');
     if(dc&&dc.dataset&&keyDate(ui.week,+dc.dataset.d)>=today0()){pickFrom({d:+dc.dataset.d,b:dayBand(+dc.dataset.d)});return}}
-  const el=e.target.closest('[data-act]');if(!el||el.tagName==='SELECT'||el.tagName==='INPUT')return;
-  const a=el.dataset.act,v=el.dataset.v;
+  let el=e.target.closest('[data-act]');if(!el||el.tagName==='SELECT'||el.tagName==='INPUT')return;
+  let a=el.dataset.act,v=el.dataset.v,sure=false;
+  if(a==='sureno'){dlgSure=null;if(dlgSlot||dlgCat||dlgPick||dlgGym||dlgType||dlgAsk||dlgInv)renderDlg();else closeDlg();return}
+  if(a==='sureyes'){const o=dlgSure&&dlgSure.opts[+el.dataset.i];dlgSure=null;
+    if(!(dlgSlot||dlgCat||dlgPick||dlgGym||dlgType||dlgAsk||dlgInv)){const dd=document.getElementById('dlg');if(dd.open)dd.close()}
+    if(!o){render();return}
+    el={dataset:o.ds,tagName:'BUTTON'};a=o.ds.act;v=o.ds.v;sure=true}
+  if(!sure){const q=sureFor(a,el.dataset);if(q){dlgSure=q;openDlg();return}}
   if(a==='tab'){ui.tab=v;ui.menu=false;ui.scope='week';try{history.replaceState(null,'','#'+v)}catch(x){try{location.hash=v}catch(y){}}}
   else if(a==='club'){save('group/settings',{club:v});ui.swap=null}
   else if(a==='week'){ui.scope='week';ui.week=shiftWeek(ui.week,+v);ui.swap=null}
@@ -1114,7 +1148,7 @@ document.addEventListener('click',e=>{
   else if(a==='invconfirm'){if(dlgInv){const d=dlgInv,to={};Object.keys(d.inv).forEach(p=>{if(d.inv[p])to[p]='ask'});
       const patch=d.patch;if(Object.keys(to).length)patch.invites={[d.id]:{from:ui.me,to}};
       save(weekPath(),patch);const sl=slotById(d.id);closeDlg();toast((sl?sl.course+' de '+DAYS[sl.day].toLowerCase():'Cours')+' ajouté à ta semaine.')}}
-  else if(a==='rmask'||a==='rmme'||a==='rmall'){const id=dlgSlot,ss=soloList().filter(o=>o.s.id===id),mine=ui.me&&ss.some(o=>o.p===ui.me);
+  else if(a==='rmask'||a==='rmme'||a==='rmall'){const id=el.dataset.id||dlgSlot,ss=soloList().filter(o=>o.s.id===id),mine=ui.me&&ss.some(o=>o.p===ui.me);
     if(a==='rmask'&&ss.length>1&&mine){ui.rmAsk=true;renderDlg();return}
     const who2=a==='rmme'||(a==='rmask'&&ss.length>1&&!mine&&false)?ss.filter(o=>o.p===ui.me):a==='rmask'&&ss.length===1?ss:ss;
     const patch={solo:{},booked:{[id]:{}}};who2.forEach(o=>{(patch.solo[o.p]=patch.solo[o.p]||{})[o.c]=null;patch.booked[id][o.p]=null});
@@ -1167,7 +1201,7 @@ document.addEventListener('click',e=>{
   else if(a==='gymdel'){const id=el.dataset.id;save(weekPath(),{gym:{[id.slice(4)]:null},booked:{[id]:null}});closeDlg()}
   else if(a==='pickcat'){dlgCat=v;dlgSlot=null;openDlg();return}
   else if(a==='unplan'){const id=(week().plan||{})[v],go=id&&(week().go||{})[id];
-    if(isObj(go)&&ui.me&&go[ui.me]&&PEOPLE.some(p=>p!==ui.me&&go[p]))save(weekPath(),{go:{[id]:{[ui.me]:null}},booked:{[id]:{[ui.me]:null}}});
+    if(!el.dataset.all&&isObj(go)&&ui.me&&go[ui.me]&&PEOPLE.some(p=>p!==ui.me&&go[p]))save(weekPath(),{go:{[id]:{[ui.me]:null}},booked:{[id]:{[ui.me]:null}}});
     else{const patch={plan:{[v]:null},pins:{[v]:null},by:{[v]:null}};if(id)patch.go={[id]:null};save(weekPath(),patch)}
     closeDlg()}
   else if(a==='rebook'){const d=el.dataset,yes=d.v==='1',on=el.getAttribute&&el.getAttribute('aria-pressed')==='true';

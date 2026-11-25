@@ -141,6 +141,12 @@ body.dragging .week7.pickable .day.drop .dayadd{border-color:rgba(255,255,255,.6
 .sess{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;border-radius:16px;
   padding:11px 10px 11px 12px;background:rgba(255,255,255,.085);overflow:hidden;min-width:0}
 .sess:hover{background:rgba(255,255,255,.15)}
+.sx{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.38);color:#fff;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s,background-color .15s}
+.sx svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
+.sess:hover .sx,.sess:focus-visible .sx{opacity:1}
+.sx:hover{background:rgba(0,0,0,.7)}
+@media (hover:none){.sx{display:none}}
+.surebtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .sess.inv,.sess.inv:hover{background:rgba(201,169,255,.24);box-shadow:inset 0 0 0 2px var(--invite);cursor:default}
 .sess.inv .sc{color:var(--invite);display:inline-flex;align-items:center;gap:5px}
 .sess.inv .sc svg{width:13px;height:13px;stroke-width:2.2}
