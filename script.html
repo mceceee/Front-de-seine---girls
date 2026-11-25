@@ -452,7 +452,9 @@ function bestAlts(cat,cur,n){const plan=week().plan||{};
 function altRow(a,cat,rm){return `<button class="alt" data-act="setplan" data-cat="${cat}" data-id="${a.s.id}" ${rm&&rm!==cat?`data-rm="${rm}"`:''}>
     <span class="aw"><b>${DAYS[a.s.day].slice(0,3)}. ${hhmm(a.s.time)}</b>${courseTag(a.s.course)}${clubNote(a.s)?'<span class="lbl">'+clubNote(a.s)+'</span>':''}</span>${avs(a.w)}</button>`}
 /* Un cours noté complet reste visible, en retrait : un clic ouvre son détail pour corriger les places. */
-function fullRow(x){return `<button class="alt full" data-act="slot" data-id="${x.id}"><span class="aw"><b>${DAYS[x.day].slice(0,3)}. ${hhmm(x.time)}</b>${courseTag(x.course)}<span class="lbl">${clubNote(x)}</span></span><span class="pl bad">Complet</span></button>`}
+const noRoom=x=>placesOf(x.id)===0||shortOf(x,who(x));
+function fullRow(x){const pl=placesOf(x.id),need=needOf(x,who(x));
+  return `<button class="alt full" data-act="slot" data-id="${x.id}"><span class="aw"><b>${DAYS[x.day].slice(0,3)}. ${hhmm(x.time)}</b>${courseTag(x.course)}<span class="lbl">${clubNote(x)}</span></span><span class="pl bad">${pl===0?'Complet':pl+' place'+(pl>1?'s':'')+' pour '+need}</span></button>`}
 const FILTER_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-6.2 7.4V19l-3.6-1.8v-4.8z"/></svg>';
 const PARTS=[['all','Tout'],['am','Matin'],['pm','Aprem'],['eve','Soirée']];
 const inPart=(min,p)=>p==='am'?min<720:p==='pm'?min>=720&&min<1020:p==='eve'?min>=1020:true;
@@ -473,7 +475,7 @@ function replaceLists(cat,sl){const f=rfState(cat),cats=f.cats.length?f.cats:CAT
   const byTime=(a,b)=>a.s.day-b.s.day||a.s.min-b.s.min||a.s.course.localeCompare(b.s.course)||(a.s.club<b.s.club?-1:1),by=recommend().by;
   const same=[].concat(...cats.map(c=>by[c])).filter(a=>a.s.id!==sl.id&&a.s.day===sl.day&&!shortOf(a.s,a.w)
     &&(!f.parts.length||f.parts.some(p=>inPart(a.s.min,p)))&&(!f.clubs.length||f.clubs.includes(a.s.club))&&f.who.every(p=>a.w.some(x=>x.p===p&&x.ok))).sort(byTime);
-  const fulls=candidates().filter(x=>x.id!==sl.id&&x.day===sl.day&&x.cat&&cats.includes(x.cat)&&placesOf(x.id)===0&&booking(x).st!=='past'
+  const fulls=candidates().filter(x=>x.id!==sl.id&&x.day===sl.day&&x.cat&&cats.includes(x.cat)&&noRoom(x)&&booking(x).st!=='past'
     &&(!f.parts.length||f.parts.some(p=>inPart(x.min,p)))&&(!f.clubs.length||f.clubs.includes(x.club))).map(x=>({s:x,full:true}));
   const rows=same.concat(fulls).sort(byTime);
   const other=by[cat].filter(a=>a.s.id!==sl.id&&a.s.course===sl.course&&a.s.day!==sl.day&&!dayTaken(cat,a.s.day)&&!shortOf(a.s,a.w)).sort(byTime);
@@ -524,7 +526,8 @@ function fixRows(pick){return catsByWeek(c=>pick[c]&&pick[c].s).filter(([c])=>pi
     <span class="rbp">${act}</span></div>`}).join('')}
 
 function renderPlanning(){
-  const all=candidates(),plan=week().plan||{},inPlan=new Set(Object.values(plan));
+  const all=candidates(),plan=week().plan||{},me=ui.me;
+  const inPlan=new Set(Object.values(plan).filter(id=>{const x=id&&slotById(id);return x&&(!me||who(x).some(y=>y.p===me&&y.ok))}).concat(soloList().filter(o=>!me||o.p===me).map(o=>o.s.id)));
   let h=`<section class="blk"><div class="hd"><h2>Team training</h2>
     <span class="seg" role="group" aria-label="Catégorie">${[['all','Tout']].concat(CATS).map(([k,l])=>
       `<button data-act="cat" data-v="${k}" aria-pressed="${ui.cat===k}">${l}</button>`).join('')}</span>
@@ -535,7 +538,7 @@ function renderPlanning(){
     const list=all.filter(s=>s.day===d&&(ui.cat==='all'||s.cat===ui.cat));
     let col='';
     list.forEach(s=>{const w=who(s),n=w.filter(x=>x.ok).length;if(ui.together&&n<3)return;
-      col+=`<button class="slot c-${s.cat||'x'} ${n===0?'dim':''} ${inPlan.has(s.id)?'inplan':''}" data-act="slot" data-id="${s.id}">
+      col+=`<button class="slot c-${s.cat||'x'} ${n===0?'dim':''} ${inPlan.has(s.id)?'inplan':placesOf(s.id)===0||shortOf(s,w)?'short':''}" data-act="slot" data-id="${s.id}">
         <span class="t">${hhmm(s.time)}</span><span class="n">${courseTag(s.course)}</span>
         <span class="dots" aria-label="${n} sur 3 peuvent venir">${w.map(x=>`<i class="${x.ok?'on':''}"></i>`).join('')}</span>${clubNote(s)?'<span class="pl '+(s.club==='inconnu'?'warn':'')+'">'+clubNote(s)+'</span>':''}${placesTxt(s,w)}</button>`});
     h+=`<div class="day ${ui.day===d?'cur':''}" data-d="${d}"><div class="dh"><b>${DAYS[d].slice(0,3)}</b>${keyDate(ui.week,d).getDate()}</div>${col||'<span class="none">Rien</span>'}</div>`}
@@ -629,7 +632,7 @@ function renderDlg(){
       .sort((a,b)=>a.s.min-b.s.min||a.s.course.localeCompare(b.s.course)||(a.s.club<b.s.club?-1:1));
     box.innerHTML=`<div class="dlg"><div class="dh2"><div><span class="lbl">Choisir un cours</span><h3>${DAYS[d]} ${keyDate(ui.week,d).getDate()}</h3></div><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
       ${filterBar(f)}
-      ${all.length?`<div class="alts">${all.map(a=>placesOf(a.s.id)===0?fullRow(a.s):`<button class="alt ${isPinned(a.s)?'cur':''}" data-act="pin" data-id="${a.s.id}"><span class="aw"><b>${hhmm(a.s.time)}</b>${courseTag(a.s.course)}<span class="lbl">${clubNote(a.s)}</span></span>${avs(a.w)}</button>`).join('')}</div>`:`<p class="none">${+keyDate(ui.week,d)===+today0()?'Plus aucun cours à venir aujourd’hui avec ces filtres.':'Aucun cours ne correspond à ces filtres ce jour-là.'}</p>`}
+      ${all.length?`<div class="alts">${all.map(a=>noRoom(a.s)?fullRow(a.s):`<button class="alt ${isPinned(a.s)?'cur':''}" data-act="pin" data-id="${a.s.id}"><span class="aw"><b>${hhmm(a.s.time)}</b>${courseTag(a.s.course)}<span class="lbl">${clubNote(a.s)}</span></span>${avs(a.w)}</button>`).join('')}</div>`:`<p class="none">${+keyDate(ui.week,d)===+today0()?'Plus aucun cours à venir aujourd’hui avec ces filtres.':'Aucun cours ne correspond à ces filtres ce jour-là.'}</p>`}
       ${pinsDay?`<button class="btn ghost sm" data-act="resetcell" data-d="${d}">Ne plus imposer de cours ce jour-là</button>`:''}</div>`;return}
   if(dlgCat){box.innerHTML=`<div class="dlg"><div class="dh2"><h3>Ajouter un cours ${CATLBL[dlgCat]}</h3><button class="rnd" data-act="closedlg" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>${altList(dlgCat,null,6)}</div>`;return}
   const s=slotById(dlgSlot);if(!s){closeDlg();return}
